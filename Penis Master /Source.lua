@@ -1,9 +1,10 @@
+local Player = Players.LocalPlayer or owner
+
 -----/Services/-----
 local Players = game:GetService("Players")
 local Debris = game:GetService("Debris")
 
 -----/Variables/-----
-local Player = Players.LocalPlayer
 local Backpack = Player:WaitForChild("Backpack")
 
 -----/Main/-----
