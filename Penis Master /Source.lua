@@ -1,4 +1,4 @@
-local Player = Players.LocalPlayer or owner
+local Player = owner
 
 -----/Services/-----
 local Players = game:GetService("Players")
