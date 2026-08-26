@@ -1,803 +1,930 @@
-local Player = owner
-
--- ================================================================
--- HL1 HUD + Source Engine Movement (Framework Structure)
--- ================================================================
-
------/Services/-----
+-- LocalScript: HUD HL1 Authentic Speed + Landing Effect + Jump Animation
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local ContextActionService = game:GetService("ContextActionService")
-local Debris = game:GetService("Debris")
-
------/Variables/-----
 local Camera = workspace.CurrentCamera
-local Gui = Player:WaitForChild("PlayerGui")
 
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local RootPart = Character:WaitForChild("HumanoidRootPart")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
 
-local GmodDeathSound
-local JumpAnimTrack
+-- [AUTHORIZED MODIFICATION: GMOD DEATH SOUND VARIABLE]
+local gmodDeathSound
+-- [END MODIFICATION]
 
--- Fall / landing effect state
-local LastVelocityY = 0
-local LandingOffset = CFrame.new()
-local LandingRoll = 0
+-- [AUTHORIZED MODIFICATION: ANIMATION SETUP]
+local jumpAnim = Instance.new("Animation")
+jumpAnim.AnimationId = "rbxassetid://131814798893284"
+local jumpAnimTrack
+-- [END MODIFICATION]
 
-local DeathOverlayTween
-local VignetteTween
-
-local LastHealth = 100
-local ImpactTween
-local ColorLerpAlpha = 0
-
--- Movement state
-local ScriptEnabled = true
-local SpaceHeld = false
-local CrouchHeld = false
-local MobileInputs = {W = false, A = false, S = false, D = false}
-
-local Velocity = Vector3.new()
-local IsGrounded = false
-local WasGrounded = false
-local MoveDir = Vector3.new()
-
-local FootstepTimer = 0
-local LastFootstepIndex = 0
-
-local CurrentCameraOffset = 0
-local TargetCameraOffset = 0
-
------/Values/-----
--- Camera / FOV
+-- CONFIGURATION
 local DEFAULT_FOV = 75
 local ZOOM_FOV = 20
-
--- Colors
+Camera.FieldOfView = DEFAULT_FOV
 local WHITE = Color3.fromRGB(255, 255, 255)
 local HL_ORANGE = Color3.fromRGB(255, 215, 0)
 local HL_RED = Color3.fromRGB(255, 0, 0)
 local HL_BLACK = Color3.new(0, 0, 0)
 
--- Landing effect
+-- FALL VARIABLES
+local lastVelocityY = 0
+local landingOffset = CFrame.new()
+local landingRoll = 0
 local MIN_FALL_SPEED = 38
 
--- Jump animation asset
-local JumpAnim = Instance.new("Animation")
-JumpAnim.AnimationId = "rbxassetid://131814798893284"
+local deathOverlayTween
 
--- Movement physics config
-local Cfg = {
-	groundAccel = 25,
-	airAccel = 10000,
-	maxAirSpeed = 1,
-	runSpeed = 26,
-	jumpPower = 35,
-	gravity = 100,
-	friction = 4,
-	stopSpeed = 6,
-	abhMultiplier = -5,
-	postImpulseGain = 0,
-	surfSlopeLimit = 4,
-}
+-- [AUTHORIZED MODIFICATION: VIGNETTE FOR ZOOM]
+local vignetteTween
+-- [END MODIFICATION]
 
-local FootstepInterval = 0.35
-local CrouchSpeed = 15
-local RocketBlastRadius = 25
+local cursorEnabled = false
+UserInputService.MouseIconEnabled = false
 
--- Footstep sounds by material
-local FootstepSounds = {
-	Slate = {"rbxassetid://81623756670923", "rbxassetid://78754179999047", "rbxassetid://79418255155423", "rbxassetid://112240321395589"},
-	Concrete = {"rbxassetid://81623756670923", "rbxassetid://78754179999047", "rbxassetid://79418255155423", "rbxassetid://112240321395589"},
-	Brick = {"rbxassetid://81623756670923", "rbxassetid://78754179999047", "rbxassetid://79418255155423", "rbxassetid://112240321395589"},
-	Wood = {"rbxassetid://87921439933530", "rbxassetid://89597871459985", "rbxassetid://139932856876296", "rbxassetid://75643573822739"},
-	WoodPlanks = {"rbxassetid://87921439933530", "rbxassetid://89597871459985", "rbxassetid://139932856876296", "rbxassetid://75643573822739"},
-	Metal = {"rbxassetid://78580994772675", "rbxassetid://79005288283137", "rbxassetid://98060045106272", "rbxassetid://122668036980895"},
-	DiamondPlate = {"rbxassetid://78580994772675", "rbxassetid://79005288283137", "rbxassetid://98060045106272", "rbxassetid://122668036980895"},
-	CorrodedMetal = {"rbxassetid://78580994772675", "rbxassetid://79005288283137", "rbxassetid://98060045106272", "rbxassetid://122668036980895"},
-	Grass = {"rbxassetid://105277634319381", "rbxassetid://98069158661569", "rbxassetid://135182192451997", "rbxassetid://116425333836106"},
-	Sand = {"rbxassetid://84209465430801", "rbxassetid://115151668857364", "rbxassetid://93919782627384", "rbxassetid://105793766638092"},
-	Mud = {"rbxassetid://125078502573216", "rbxassetid://119139580459950", "rbxassetid://132103348107931", "rbxassetid://137748446979624"},
-	Snow = {"rbxassetid://90615555465225", "rbxassetid://125184282810966", "rbxassetid://114138676251211", "rbxassetid://132337775532551"},
-	Plastic = {"rbxassetid://135712042029119", "rbxassetid://90507702118699", "rbxassetid://98172042741214", "rbxassetid://106319783012941"},
-	SmoothPlastic = {"rbxassetid://135712042029119", "rbxassetid://90507702118699", "rbxassetid://98172042741214", "rbxassetid://106319783012941"},
-	Fabric = {"rbxassetid://134707629631621", "rbxassetid://120658421045233", "rbxassetid://82315729709772", "rbxassetid://101186178877521"},
-	Glass = {"rbxassetid://88813292437651", "rbxassetid://126359516625890", "rbxassetid://133178229418641", "rbxassetid://80572007771746"},
-	Ice = {"rbxassetid://105786448375088", "rbxassetid://106093339008891", "rbxassetid://86217431358704", "rbxassetid://131109062323793"},
-	Air = {""},
-}
+-- INTERFACE
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "HL_HUD_Final_Unified"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.DisplayOrder = 100
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
-local JumpSounds = {"rbxassetid://142258831", "rbxassetid://142258874", "rbxassetid://142258905"}
+local deathOverlay = Instance.new("Frame")
+deathOverlay.Size = UDim2.new(1, 0, 1, 0)
+deathOverlay.BackgroundColor3 = HL_RED
+deathOverlay.BackgroundTransparency = 1
+deathOverlay.BorderSizePixel = 0
+deathOverlay.ZIndex = 999
+deathOverlay.Parent = screenGui
 
------/Main/-----
+-- [AUTHORIZED MODIFICATION: VIGNETTE FRAME - TODOS LOS LADOS CON GRADIENTES + ESQUINAS]
+local vignette = Instance.new("Frame")
+vignette.Size = UDim2.new(1, 0, 1, 0)
+vignette.BackgroundTransparency = 1 -- Contenedor transparente
+vignette.BorderSizePixel = 0
+vignette.ZIndex = 900 -- Debajo del death overlay
+vignette.Parent = screenGui
 
--- ===== UI: base containers =====
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "HL_HUD_Final_Unified"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 100
-ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+-- Borde izquierdo
+local leftBorder = Instance.new("Frame")
+leftBorder.Size = UDim2.new(0, 60, 1, 0) -- Ancho fijo, alto completo
+leftBorder.Position = UDim2.new(0, 0, 0, 0)
+leftBorder.BackgroundColor3 = HL_BLACK
+leftBorder.BackgroundTransparency = 1 -- Transparente inicialmente
+leftBorder.BorderSizePixel = 0
+leftBorder.ZIndex = 901
+leftBorder.Parent = vignette
 
-local DeathOverlay = Instance.new("Frame")
-DeathOverlay.Size = UDim2.new(1, 0, 1, 0)
-DeathOverlay.BackgroundColor3 = HL_RED
-DeathOverlay.BackgroundTransparency = 1
-DeathOverlay.BorderSizePixel = 0
-DeathOverlay.ZIndex = 999
-DeathOverlay.Parent = ScreenGui
-
--- ===== UI: vignette (zoom) =====
-local Vignette = Instance.new("Frame")
-Vignette.Size = UDim2.new(1, 0, 1, 0)
-Vignette.BackgroundTransparency = 1
-Vignette.BorderSizePixel = 0
-Vignette.ZIndex = 900
-Vignette.Parent = ScreenGui
-
-local LeftBorder = Instance.new("Frame")
-LeftBorder.Size = UDim2.new(0, 60, 1, 0)
-LeftBorder.Position = UDim2.new(0, 0, 0, 0)
-LeftBorder.BackgroundColor3 = HL_BLACK
-LeftBorder.BackgroundTransparency = 1
-LeftBorder.BorderSizePixel = 0
-LeftBorder.ZIndex = 901
-LeftBorder.Parent = Vignette
-
-local LeftGradient = Instance.new("UIGradient", LeftBorder)
-LeftGradient.Rotation = 0
-LeftGradient.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0.7),
-	NumberSequenceKeypoint.new(1, 1),
+-- Gradiente para borde izquierdo (opaco en borde, transparente hacia el centro)
+local leftGradient = Instance.new("UIGradient", leftBorder)
+leftGradient.Rotation = 0
+leftGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),    -- Borde izquierdo completamente opaco
+    NumberSequenceKeypoint.new(0.5, 0.7), -- Medio: 70% transparencia
+    NumberSequenceKeypoint.new(1, 1)     -- Borde derecho completamente transparente
 })
-LeftGradient.Color = ColorSequence.new(HL_BLACK)
+leftGradient.Color = ColorSequence.new(HL_BLACK)
 
-local RightBorder = Instance.new("Frame")
-RightBorder.Size = UDim2.new(0, 60, 1, 0)
-RightBorder.Position = UDim2.new(1, -60, 0, 0)
-RightBorder.BackgroundColor3 = HL_BLACK
-RightBorder.BackgroundTransparency = 1
-RightBorder.BorderSizePixel = 0
-RightBorder.ZIndex = 901
-RightBorder.Parent = Vignette
+-- Borde derecho
+local rightBorder = Instance.new("Frame")
+rightBorder.Size = UDim2.new(0, 60, 1, 0)
+rightBorder.Position = UDim2.new(1, -60, 0, 0) -- Alineado a la derecha
+rightBorder.BackgroundColor3 = HL_BLACK
+rightBorder.BackgroundTransparency = 1
+rightBorder.BorderSizePixel = 0
+rightBorder.ZIndex = 901
+rightBorder.Parent = vignette
 
-local RightGradient = Instance.new("UIGradient", RightBorder)
-RightGradient.Rotation = 180
-RightGradient.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0.7),
-	NumberSequenceKeypoint.new(1, 1),
+-- Gradiente para borde derecho (opaco en borde, transparente hacia el centro)
+local rightGradient = Instance.new("UIGradient", rightBorder)
+rightGradient.Rotation = 180
+rightGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),    -- Borde derecho completamente opaco
+    NumberSequenceKeypoint.new(0.5, 0.7), -- Medio: 70% transparencia
+    NumberSequenceKeypoint.new(1, 1)     -- Borde izquierdo completamente transparente
 })
-RightGradient.Color = ColorSequence.new(HL_BLACK)
+rightGradient.Color = ColorSequence.new(HL_BLACK)
 
-local TopBorder = Instance.new("Frame")
-TopBorder.Size = UDim2.new(1, 0, 0, 40)
-TopBorder.Position = UDim2.new(0, 0, 0, 0)
-TopBorder.BackgroundColor3 = HL_BLACK
-TopBorder.BackgroundTransparency = 1
-TopBorder.BorderSizePixel = 0
-TopBorder.ZIndex = 901
-TopBorder.Parent = Vignette
+-- Borde superior
+local topBorder = Instance.new("Frame")
+topBorder.Size = UDim2.new(1, 0, 0, 40) -- Ancho completo
+topBorder.Position = UDim2.new(0, 0, 0, 0)
+topBorder.BackgroundColor3 = HL_BLACK
+topBorder.BackgroundTransparency = 1
+topBorder.BorderSizePixel = 0
+topBorder.ZIndex = 901
+topBorder.Parent = vignette
 
-local TopGradient = Instance.new("UIGradient", TopBorder)
-TopGradient.Rotation = 90
-TopGradient.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0.7),
-	NumberSequenceKeypoint.new(1, 1),
+-- Gradiente para borde superior (opaco en borde, transparente hacia abajo)
+local topGradient = Instance.new("UIGradient", topBorder)
+topGradient.Rotation = 90
+topGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),    -- Borde superior completamente opaco
+    NumberSequenceKeypoint.new(0.5, 0.7), -- Medio: 70% transparencia
+    NumberSequenceKeypoint.new(1, 1)     -- Borde inferior completamente transparente
 })
-TopGradient.Color = ColorSequence.new(HL_BLACK)
+topGradient.Color = ColorSequence.new(HL_BLACK)
 
-local BottomBorder = Instance.new("Frame")
-BottomBorder.Size = UDim2.new(1, 0, 0, 40)
-BottomBorder.Position = UDim2.new(0, 0, 1, -40)
-BottomBorder.BackgroundColor3 = HL_BLACK
-BottomBorder.BackgroundTransparency = 1
-BottomBorder.BorderSizePixel = 0
-BottomBorder.ZIndex = 901
-BottomBorder.Parent = Vignette
+-- Borde inferior
+local bottomBorder = Instance.new("Frame")
+bottomBorder.Size = UDim2.new(1, 0, 0, 40)
+bottomBorder.Position = UDim2.new(0, 0, 1, -40) -- Alineado al fondo
+bottomBorder.BackgroundColor3 = HL_BLACK
+bottomBorder.BackgroundTransparency = 1
+bottomBorder.BorderSizePixel = 0
+bottomBorder.ZIndex = 901
+bottomBorder.Parent = vignette
 
-local BottomGradient = Instance.new("UIGradient", BottomBorder)
-BottomGradient.Rotation = -90
-BottomGradient.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0.7),
-	NumberSequenceKeypoint.new(1, 1),
+-- Gradiente para borde inferior (opaco en borde, transparente hacia arriba)
+local bottomGradient = Instance.new("UIGradient", bottomBorder)
+bottomGradient.Rotation = -90
+bottomGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),    -- Borde inferior completamente opaco
+    NumberSequenceKeypoint.new(0.5, 0.7), -- Medio: 70% transparencia
+    NumberSequenceKeypoint.new(1, 1)     -- Borde superior completamente transparente
 })
-BottomGradient.Color = ColorSequence.new(HL_BLACK)
+bottomGradient.Color = ColorSequence.new(HL_BLACK)
 
-local CornerTopLeft = Instance.new("Frame")
-CornerTopLeft.Size = UDim2.new(0, 60, 0, 40)
-CornerTopLeft.Position = UDim2.new(0, 0, 0, 0)
-CornerTopLeft.BackgroundColor3 = HL_BLACK
-CornerTopLeft.BackgroundTransparency = 1
-CornerTopLeft.BorderSizePixel = 0
-CornerTopLeft.ZIndex = 902
-CornerTopLeft.Parent = Vignette
+-- [AUTHORIZED MODIFICATION: ESQUINAS CON GRADIENTES RADIALES]
+-- Esquina superior izquierda
+local cornerTopLeft = Instance.new("Frame")
+cornerTopLeft.Size = UDim2.new(0, 60, 0, 40)
+cornerTopLeft.Position = UDim2.new(0, 0, 0, 0)
+cornerTopLeft.BackgroundColor3 = HL_BLACK
+cornerTopLeft.BackgroundTransparency = 1
+cornerTopLeft.BorderSizePixel = 0
+cornerTopLeft.ZIndex = 902
+cornerTopLeft.Parent = vignette
 
-local CornerTLGradient = Instance.new("UIGradient", CornerTopLeft)
-CornerTLGradient.Rotation = 45
-CornerTLGradient.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0.5),
-	NumberSequenceKeypoint.new(1, 1),
+-- Gradiente radial para esquina superior izquierda
+local cornerTLGradient = Instance.new("UIGradient", cornerTopLeft)
+cornerTLGradient.Rotation = 45
+cornerTLGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),    -- Esquina completamente opaca
+    NumberSequenceKeypoint.new(0.5, 0.5), -- Medio: 50% transparencia
+    NumberSequenceKeypoint.new(1, 1)     -- Centro completamente transparente
 })
-CornerTLGradient.Color = ColorSequence.new(HL_BLACK)
+cornerTLGradient.Color = ColorSequence.new(HL_BLACK)
 
-local CornerTopRight = Instance.new("Frame")
-CornerTopRight.Size = UDim2.new(0, 60, 0, 40)
-CornerTopRight.Position = UDim2.new(1, -60, 0, 0)
-CornerTopRight.BackgroundColor3 = HL_BLACK
-CornerTopRight.BackgroundTransparency = 1
-CornerTopRight.BorderSizePixel = 0
-CornerTopRight.ZIndex = 902
-CornerTopRight.Parent = Vignette
+-- Esquina superior derecha
+local cornerTopRight = Instance.new("Frame")
+cornerTopRight.Size = UDim2.new(0, 60, 0, 40)
+cornerTopRight.Position = UDim2.new(1, -60, 0, 0)
+cornerTopRight.BackgroundColor3 = HL_BLACK
+cornerTopRight.BackgroundTransparency = 1
+cornerTopRight.BorderSizePixel = 0
+cornerTopRight.ZIndex = 902
+cornerTopRight.Parent = vignette
 
-local CornerTRGradient = Instance.new("UIGradient", CornerTopRight)
-CornerTRGradient.Rotation = 135
-CornerTRGradient.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0.5),
-	NumberSequenceKeypoint.new(1, 1),
+-- Gradiente radial para esquina superior derecha
+local cornerTRGradient = Instance.new("UIGradient", cornerTopRight)
+cornerTRGradient.Rotation = 135
+cornerTRGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),    -- Esquina completamente opaca
+    NumberSequenceKeypoint.new(0.5, 0.5), -- Medio: 50% transparencia
+    NumberSequenceKeypoint.new(1, 1)     -- Centro completamente transparente
 })
-CornerTRGradient.Color = ColorSequence.new(HL_BLACK)
+cornerTRGradient.Color = ColorSequence.new(HL_BLACK)
 
-local CornerBottomLeft = Instance.new("Frame")
-CornerBottomLeft.Size = UDim2.new(0, 60, 0, 40)
-CornerBottomLeft.Position = UDim2.new(0, 0, 1, -40)
-CornerBottomLeft.BackgroundColor3 = HL_BLACK
-CornerBottomLeft.BackgroundTransparency = 1
-CornerBottomLeft.BorderSizePixel = 0
-CornerBottomLeft.ZIndex = 902
-CornerBottomLeft.Parent = Vignette
+-- Esquina inferior izquierda
+local cornerBottomLeft = Instance.new("Frame")
+cornerBottomLeft.Size = UDim2.new(0, 60, 0, 40)
+cornerBottomLeft.Position = UDim2.new(0, 0, 1, -40)
+cornerBottomLeft.BackgroundColor3 = HL_BLACK
+cornerBottomLeft.BackgroundTransparency = 1
+cornerBottomLeft.BorderSizePixel = 0
+cornerBottomLeft.ZIndex = 902
+cornerBottomLeft.Parent = vignette
 
-local CornerBLGradient = Instance.new("UIGradient", CornerBottomLeft)
-CornerBLGradient.Rotation = -45
-CornerBLGradient.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0.5),
-	NumberSequenceKeypoint.new(1, 1),
+-- Gradiente radial para esquina inferior izquierda
+local cornerBLGradient = Instance.new("UIGradient", cornerBottomLeft)
+cornerBLGradient.Rotation = -45
+cornerBLGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),    -- Esquina completamente opaca
+    NumberSequenceKeypoint.new(0.5, 0.5), -- Medio: 50% transparencia
+    NumberSequenceKeypoint.new(1, 1)     -- Centro completamente transparente
 })
-CornerBLGradient.Color = ColorSequence.new(HL_BLACK)
+cornerBLGradient.Color = ColorSequence.new(HL_BLACK)
 
-local CornerBottomRight = Instance.new("Frame")
-CornerBottomRight.Size = UDim2.new(0, 60, 0, 40)
-CornerBottomRight.Position = UDim2.new(1, -60, 1, -40)
-CornerBottomRight.BackgroundColor3 = HL_BLACK
-CornerBottomRight.BackgroundTransparency = 1
-CornerBottomRight.BorderSizePixel = 0
-CornerBottomRight.ZIndex = 902
-CornerBottomRight.Parent = Vignette
+-- Esquina inferior derecha
+local cornerBottomRight = Instance.new("Frame")
+cornerBottomRight.Size = UDim2.new(0, 60, 0, 40)
+cornerBottomRight.Position = UDim2.new(1, -60, 1, -40)
+cornerBottomRight.BackgroundColor3 = HL_BLACK
+cornerBottomRight.BackgroundTransparency = 1
+cornerBottomRight.BorderSizePixel = 0
+cornerBottomRight.ZIndex = 902
+cornerBottomRight.Parent = vignette
 
-local CornerBRGradient = Instance.new("UIGradient", CornerBottomRight)
-CornerBRGradient.Rotation = -135
-CornerBRGradient.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0.5),
-	NumberSequenceKeypoint.new(1, 1),
+-- Gradiente radial para esquina inferior derecha
+local cornerBRGradient = Instance.new("UIGradient", cornerBottomRight)
+cornerBRGradient.Rotation = -135
+cornerBRGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),    -- Esquina completamente opaca
+    NumberSequenceKeypoint.new(0.5, 0.5), -- Medio: 50% transparencia
+    NumberSequenceKeypoint.new(1, 1)     -- Centro completamente transparente
 })
-CornerBRGradient.Color = ColorSequence.new(HL_BLACK)
+cornerBRGradient.Color = ColorSequence.new(HL_BLACK)
+-- [END MODIFICATION]
 
--- ===== UI: speedometer =====
-local SpeedLabel = Instance.new("TextLabel")
-SpeedLabel.Size = UDim2.new(0, 200, 0, 50)
-SpeedLabel.Position = UDim2.new(0.5, -100, 1, -250)
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.TextColor3 = HL_ORANGE
-SpeedLabel.TextSize = 47
-SpeedLabel.Text = "0.0"
-SpeedLabel.Font = Enum.Font.Gotham
-SpeedLabel.Parent = ScreenGui
+local customCursor = Instance.new("Frame")
+customCursor.Size = UDim2.new(0, 5, 0, 5)
+customCursor.AnchorPoint = Vector2.new(0.5, 0.5)
+customCursor.BackgroundColor3 = WHITE
+customCursor.Visible = cursorEnabled
+customCursor.Parent = screenGui
+Instance.new("UICorner", customCursor).CornerRadius = UDim.new(1, 0)
 
-local SpeedStroke = Instance.new("UIStroke", SpeedLabel)
-SpeedStroke.Thickness = 0
-SpeedStroke.Color = HL_ORANGE
+-- SPEEDOMETER
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0, 200, 0, 50)
+speedLabel.Position = UDim2.new(0.5, -100, 1, -250)
+speedLabel.BackgroundTransparency = 1
+speedLabel.TextColor3 = HL_ORANGE
+speedLabel.TextSize = 47
+speedLabel.Text = "0.0"
+speedLabel.Font = Enum.Font.Gotham  -- 🔥 NUEVA FUENTE PARA VELOCIDAD
+speedLabel.Parent = screenGui
 
--- ===== UI: health =====
-local HealthContainer = Instance.new("Frame")
-HealthContainer.Size = UDim2.new(0, 275, 0, 99)
-HealthContainer.Position = UDim2.new(0, 50, 0.99, -100)
-HealthContainer.BackgroundColor3 = HL_BLACK
-HealthContainer.BackgroundTransparency = 0.85
-HealthContainer.ZIndex = 500
-HealthContainer.Parent = ScreenGui
-Instance.new("UICorner", HealthContainer).CornerRadius = UDim.new(0, 10)
+local speedStroke = Instance.new("UIStroke", speedLabel)
+speedStroke.Thickness = 0
+speedStroke.Color = HL_ORANGE
 
-local HealthLabelText = Instance.new("TextLabel")
-HealthLabelText.Text = "HEALTH"
-HealthLabelText.Size = UDim2.new(0, 30, 1, 0)
-HealthLabelText.Position = UDim2.new(0, 19, 0, 21)
-HealthLabelText.TextColor3 = HL_ORANGE
-HealthLabelText.TextTransparency = 0.4
-HealthLabelText.TextSize = 17
-HealthLabelText.BackgroundTransparency = 1
-HealthLabelText.TextXAlignment = Enum.TextXAlignment.Left
-HealthLabelText.ZIndex = 1000
-HealthLabelText.Parent = HealthContainer
+-- HEALTH CONTAINER
+local healthContainer = Instance.new("Frame")
+healthContainer.Size = UDim2.new(0, 275, 0, 99)
+healthContainer.Position = UDim2.new(0, 50, 0.99, -100)
+healthContainer.BackgroundColor3 = HL_BLACK
+healthContainer.BackgroundTransparency = 0.85
+healthContainer.ZIndex = 500
+healthContainer.Parent = screenGui
+Instance.new("UICorner", healthContainer).CornerRadius = UDim.new(0, 10)
 
-local HealthValue = Instance.new("TextLabel")
-HealthValue.Size = UDim2.new(0, 100, 1, 0)
-HealthValue.Position = UDim2.new(0, 145, 0, 7)
-HealthValue.TextColor3 = HL_ORANGE
-HealthValue.TextTransparency = 0.15
-HealthValue.TextSize = 80
-HealthValue.BackgroundTransparency = 1
-HealthValue.TextXAlignment = Enum.TextXAlignment.Left
-HealthValue.Text = "100"
-HealthValue.Font = Enum.Font.Gotham
-HealthValue.ZIndex = 1000
-HealthValue.Parent = HealthContainer
+local healthLabelText = Instance.new("TextLabel")
+healthLabelText.Text = "HEALTH"
+healthLabelText.Size = UDim2.new(0, 30, 1, 0)
+healthLabelText.Position = UDim2.new(0, 19, 0, 21)
+healthLabelText.TextColor3 = HL_ORANGE
+healthLabelText.TextTransparency = 0.4
+healthLabelText.TextSize = 17
+healthLabelText.BackgroundTransparency = 1
+healthLabelText.TextXAlignment = Enum.TextXAlignment.Left
+healthLabelText.ZIndex = 1000
+healthLabelText.Parent = healthContainer
 
-local Glow = Instance.new("UIStroke")
-Glow.Color = HL_ORANGE
-Glow.Thickness = 0
-Glow.Transparency = 1
-Glow.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
-Glow.ZIndex = 800
-Glow.Parent = HealthValue
+local healthValue = Instance.new("TextLabel")
+healthValue.Size = UDim2.new(0, 100, 1, 0)
+healthValue.Position = UDim2.new(0, 145, 0, 7)
+healthValue.TextColor3 = HL_ORANGE
+healthValue.TextTransparency = 0.15
+healthValue.TextSize = 80
+healthValue.BackgroundTransparency = 1
+healthValue.TextXAlignment = Enum.TextXAlignment.Left
+healthValue.Text = "100"
+healthValue.Font = Enum.Font.Gotham  -- 🔥 FUENTE GOTHAM (similar a FF Din) para los números
+healthValue.ZIndex = 1000
+healthValue.Parent = healthContainer
 
--- ===== Functions: HUD effects =====
-local function PlayGlowEffect()
-	Glow.Transparency = 0.3
-	Glow.Thickness = 7
-	Glow.Color = HealthValue.TextColor3
+local glow = Instance.new("UIStroke")
+glow.Color = HL_ORANGE
+glow.Thickness = 0
+glow.Transparency = 1
+glow.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+glow.ZIndex = 800
+glow.Parent = healthValue
 
-	TweenService:Create(Glow, TweenInfo.new(7.0, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
+-- ANIMATIONS LOGIC
+local lastHealth = 100
+local impactTween
+
+local function playGlowEffect()
+	glow.Transparency = 0.3
+	glow.Thickness = 7
+	glow.Color = healthValue.TextColor3
+	
+	TweenService:Create(glow, TweenInfo.new(7.0, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
 		Transparency = 1,
-		Thickness = 0,
+		Thickness = 0
 	}):Play()
 end
 
-local function PlayImpactFlash(isCritical)
-	if ImpactTween then ImpactTween:Cancel() end
-
+local function playImpactFlash(isCritical)
+	if impactTween then impactTween:Cancel() end
+	
 	if isCritical then
-		HealthContainer.BackgroundColor3 = HL_RED
-		HealthContainer.BackgroundTransparency = 0
+		healthContainer.BackgroundColor3 = HL_RED
+		healthContainer.BackgroundTransparency = 0
 	else
-		HealthContainer.BackgroundTransparency = 0
+		healthContainer.BackgroundTransparency = 0
 	end
-
-	ImpactTween = TweenService:Create(HealthContainer, TweenInfo.new(1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+	
+	impactTween = TweenService:Create(healthContainer, TweenInfo.new(1., Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
 		BackgroundTransparency = 0.85,
-		BackgroundColor3 = HL_BLACK,
+		BackgroundColor3 = HL_BLACK
 	})
-	ImpactTween:Play()
+	impactTween:Play()
 end
 
-local function ApplyLandingEffect(fallSpeed)
-	local Intensity = math.clamp(fallSpeed / 60, 0.5, 2)
-
-	local TIME_TO_BEND = 0.08
-	local TIME_TO_RECOVER = 0.3
-
+local function applyLandingEffect(fallSpeed)
+	local intensity = math.clamp(fallSpeed / 60, 0.5, 2)
+	
+	-- VALORES DE TIEMPO (Aquí controlas la duración)
+	local TIME_TO_BEND = 0.08   -- Cuánto tarda en "agacharse" la cámara (el giro hacia abajo)
+	local TIME_TO_RECOVER = 0.3 -- Cuánto tarda en volver a la normalidad
+	
 	task.spawn(function()
-		local T1 = 0
-		local TargetRoll = math.rad(Intensity * 9) * (math.random() > 0.5 and 1 or -1)
-		local TargetOffset = CFrame.new(0, -Intensity * 1.5, 0)
-
-		while T1 < 1 do
-			local Dt = RunService.RenderStepped:Wait()
-			T1 = T1 + (Dt / TIME_TO_BEND)
-
-			LandingRoll = math.lerp(0, TargetRoll, T1)
-			LandingOffset = CFrame.new():Lerp(TargetOffset, T1)
+		-- FASE 1: INCLINACIÓN (La bajada que buscas)
+		local t1 = 0
+		local targetRoll = math.rad(intensity * 9) * (math.random() > 0.5 and 1 or -1)
+		local targetOffset = CFrame.new(0, -intensity * 1.5, 0)
+		
+		while t1 < 1 do
+			local dt = RunService.RenderStepped:Wait()
+			t1 = t1 + (dt / TIME_TO_BEND) -- Esto define la velocidad de la inclinación
+			
+			-- Usamos un Lerp suave para la bajada
+			landingRoll = math.lerp(0, targetRoll, t1)
+			landingOffset = CFrame.new():Lerp(targetOffset, t1)
 		end
-
-		local T2 = 0
-		while T2 < 1 do
-			local Dt = RunService.RenderStepped:Wait()
-			T2 = T2 + (Dt / TIME_TO_RECOVER)
-
-			local Alpha = math.sin(T2 * math.pi * 0.5)
-
-			LandingRoll = math.lerp(TargetRoll, 0, Alpha)
-			LandingOffset = TargetOffset:Lerp(CFrame.new(), Alpha)
+		
+		-- FASE 2: RECUPERACIÓN (El regreso elástico)
+		local t2 = 0
+		while t2 < 1 do
+			local dt = RunService.RenderStepped:Wait()
+			t2 = t2 + (dt / TIME_TO_RECOVER)
+			
+			-- Curva de suavizado para que se vea "pro" como en el video
+			local alpha = math.sin(t2 * math.pi * 0.5) -- Movimiento circular/elástico
+			
+			landingRoll = math.lerp(targetRoll, 0, alpha)
+			landingOffset = targetOffset:Lerp(CFrame.new(), alpha)
 		end
-
-		LandingRoll = 0
-		LandingOffset = CFrame.new()
+		
+		-- Reset final
+		landingRoll = 0
+		landingOffset = CFrame.new()
 	end)
 end
 
--- ===== Functions: character setup (HUD side) =====
-local function SetupCharacter(newChar)
-	Character = newChar
-	Humanoid = Character:WaitForChild("Humanoid")
-	RootPart = Character:WaitForChild("HumanoidRootPart")
-
-	GmodDeathSound = Instance.new("Sound")
-	GmodDeathSound.SoundId = "rbxassetid://260341777"
-	GmodDeathSound.Volume = 20
-	GmodDeathSound.Parent = RootPart
-
-	JumpAnimTrack = Humanoid:LoadAnimation(JumpAnim)
-	JumpAnimTrack.Priority = Enum.AnimationPriority.Action
-
-	DeathOverlay.BackgroundTransparency = 1
-	LastHealth = Humanoid.Health
-
-	Humanoid.Died:Connect(function()
-		if GmodDeathSound then GmodDeathSound:Play() end
-
-		if DeathOverlayTween then
-			DeathOverlayTween:Cancel()
+local function setupCharacter(newChar)
+	character = newChar
+	humanoid = character:WaitForChild("Humanoid")
+	rootPart = character:WaitForChild("HumanoidRootPart")
+	
+	-- [AUTHORIZED MODIFICATION: AUTHENTIC GMOD FLATLINE SOUND]
+	gmodDeathSound = Instance.new("Sound")
+	gmodDeathSound.SoundId = "rbxassetid://260341777" -- Flatline Authentic GMod/HL2
+	gmodDeathSound.Volume = 20
+	gmodDeathSound.Parent = rootPart
+	-- [END MODIFICATION]
+	
+	-- [AUTHORIZED MODIFICATION: LOAD TRACK]
+	jumpAnimTrack = humanoid:LoadAnimation(jumpAnim)
+	jumpAnimTrack.Priority = Enum.AnimationPriority.Action
+	-- [END MODIFICATION]
+	
+	deathOverlay.BackgroundTransparency = 1
+	lastHealth = humanoid.Health
+	humanoid.Died:Connect(function()
+		-- [AUTHORIZED MODIFICATION: PLAY SOUND]
+		if gmodDeathSound then gmodDeathSound:Play() end
+		-- [END MODIFICATION]
+		
+		-- 🔥 CANCELAR TWEEN ANTERIOR SI EXISTE
+		if deathOverlayTween then
+			deathOverlayTween:Cancel()
 		end
-
-		DeathOverlay.BackgroundTransparency = 0.70
-
-		DeathOverlayTween = TweenService:Create(DeathOverlay, TweenInfo.new(5.0, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			BackgroundTransparency = 1,
+		
+		-- 🔥 APARECE CON 0.70 DE TRANSPARENCIA
+		deathOverlay.BackgroundTransparency = 0.70
+		
+		-- 🔥 DESAPARECE GRADUALMENTE HASTA 1.0 (INVISIBLE)
+		deathOverlayTween = TweenService:Create(deathOverlay, TweenInfo.new(5.0, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1
 		})
-		DeathOverlayTween:Play()
-
-		Glow.Thickness = 0
-		Glow.Transparency = 1
+		deathOverlayTween:Play()
+		
+		glow.Thickness = 0 glow.Transparency = 1
 	end)
-
-	Humanoid.StateChanged:Connect(function(oldState, newState)
+	
+	humanoid.StateChanged:Connect(function(oldState, newState)
+		-- [AUTHORIZED MODIFICATION: ANIMATION TRIGGERS]
 		if newState == Enum.HumanoidStateType.Jumping then
-			if JumpAnimTrack then JumpAnimTrack:Play() end
+			if jumpAnimTrack then jumpAnimTrack:Play() end
 		elseif newState == Enum.HumanoidStateType.Landed then
-			if JumpAnimTrack then JumpAnimTrack:Stop(0.1) end
-			if math.abs(LastVelocityY) > MIN_FALL_SPEED then
-				ApplyLandingEffect(math.abs(LastVelocityY))
+			if jumpAnimTrack then jumpAnimTrack:Stop(0.1) end
+			if math.abs(lastVelocityY) > MIN_FALL_SPEED then
+				applyLandingEffect(math.abs(lastVelocityY))
 			end
 		end
+		-- [END MODIFICATION]
 	end)
 end
 
--- ===== Functions: movement / sound helpers =====
-local function GetFloorMaterial()
-	local RayParams = RaycastParams.new()
-	RayParams.FilterDescendantsInstances = {Character}
-	local Result = workspace:Raycast(RootPart.Position, Vector3.new(0, -3.8, 0), RayParams)
-	if Result and Result.Instance then
-		local MatName = Result.Instance.Material.Name
-		return FootstepSounds[MatName] and MatName or "Slate"
-	end
-	return "Slate"
-end
+setupCharacter(character)
+player.CharacterAdded:Connect(setupCharacter)
 
-local function PlayFootstep(vol)
-	local Material = GetFloorMaterial()
-	local SoundTable = FootstepSounds[Material] or FootstepSounds.Slate
-	local Sound = Instance.new("Sound", workspace)
-	LastFootstepIndex = (LastFootstepIndex % #SoundTable) + 1
-	Sound.SoundId = SoundTable[LastFootstepIndex]
-	Sound.Volume = vol or 1.2
-	Sound.PlaybackSpeed = 1.0 + math.random(-10, 10) / 100
-	Sound:Play()
-	Debris:AddItem(Sound, 2)
-end
+local colorLerpAlpha = 0
 
-local function PlayJump()
-	local Sound = Instance.new("Sound", workspace)
-	Sound.SoundId = JumpSounds[math.random(1, #JumpSounds)]
-	Sound.Volume = 1.3
-	Sound.PlaybackSpeed = 1.0 + math.random(-5, 5) / 100
-	Sound:Play()
-	Debris:AddItem(Sound, 2)
-	PlayFootstep(0.6)
-end
-
-local function PlayLand()
-	PlayFootstep(1.3)
-	if Velocity.Y < -60 then
-		local Impact = Instance.new("Sound", workspace)
-		Impact.SoundId = "rbxassetid://155416568"
-		Impact.Volume = 1.5
-		Impact:Play()
-		Debris:AddItem(Impact, 2)
-	end
-end
-
-local function FireRocket()
-	if not ScriptEnabled then return end
-	local Cam = workspace.CurrentCamera
-	local Direction = Cam.CFrame.LookVector
-	local Rocket = Instance.new("Part", workspace)
-	Rocket.Size = Vector3.new(0.5, 0.5, 2)
-	Rocket.CFrame = CFrame.lookAt(RootPart.Position + Direction * 3, RootPart.Position + Direction * 4)
-	Rocket.Velocity = Direction * 150
-	Rocket.CanCollide = false
-	Rocket.BrickColor = BrickColor.new("Really red")
-	Rocket.Material = Enum.Material.Neon
-
-	local Sound = Instance.new("Sound", RootPart)
-	Sound.SoundId = "rbxassetid://2156366946"
-	Sound:Play()
-	Debris:AddItem(Sound, 2)
-
-	Rocket.Touched:Connect(function(hit)
-		if hit and not hit:IsDescendantOf(Character) then
-			local Pos = Rocket.Position
-			local Explosion = Instance.new("Explosion", workspace)
-			Explosion.Position = Pos
-			Explosion.BlastRadius = RocketBlastRadius
-			Explosion.BlastPressure = 0
-			if (RootPart.Position - Pos).Magnitude <= RocketBlastRadius then
-				Velocity += (RootPart.Position - Pos).Unit * 100
-			end
-			Rocket:Destroy()
-		end
-	end)
-	Debris:AddItem(Rocket, 5)
-end
-
-local function ToggleScript()
-	ScriptEnabled = not ScriptEnabled
-	if not ScriptEnabled then
-		Humanoid.WalkSpeed, Humanoid.JumpPower, Humanoid.AutoRotate = 16, 50, true
-		Humanoid.CameraOffset = Vector3.new(0, 0, 0)
-		CrouchHeld, Velocity = false, Vector3.new()
-	end
-end
-
--- ===== Functions: mobile GUI =====
-local function CreateGui()
-	local G = Instance.new("ScreenGui", Gui)
-	G.ResetOnSpawn = false
-	G.Name = "SourceDBG"
-
-	local Toggle = Instance.new("TextButton", G)
-	Toggle.Size = UDim2.new(0, 60, 0, 25)
-	Toggle.Position = UDim2.new(1, -70, 0, 80)
-	Toggle.BackgroundColor3 = Color3.fromRGB(80, 255, 130)
-	Toggle.Text = "ON"
-	Toggle.MouseButton1Click:Connect(ToggleScript)
-
-	local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-	if IsMobile then
-		local JumpButton = Instance.new("TextButton", G)
-		JumpButton.Size = UDim2.new(0, 110, 0, 110)
-		JumpButton.Position = UDim2.new(1, -145, 1, -155)
-		JumpButton.BackgroundTransparency = 0.5
-		JumpButton.BackgroundColor3 = Color3.new(0, 0, 0)
-		JumpButton.Text = "JUMP"
-		JumpButton.TextColor3 = Color3.new(1, 1, 1)
-		Instance.new("UICorner", JumpButton).CornerRadius = UDim.new(1, 0)
-		JumpButton.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then SpaceHeld = true end end)
-		JumpButton.InputEnded:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then SpaceHeld = false end end)
-
-		local CrouchButton = Instance.new("TextButton", G)
-		CrouchButton.Size = UDim2.new(0, 80, 0, 80)
-		CrouchButton.Position = UDim2.new(1, -235, 1, -125)
-		CrouchButton.BackgroundTransparency = 0.5
-		CrouchButton.BackgroundColor3 = Color3.new(0, 0, 0)
-		CrouchButton.Text = "C"
-		CrouchButton.TextColor3 = Color3.new(1, 1, 1)
-		Instance.new("UICorner", CrouchButton).CornerRadius = UDim.new(1, 0)
-		CrouchButton.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then CrouchHeld = true end end)
-		CrouchButton.InputEnded:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then CrouchHeld = false end end)
-
-		local GrenadeButton = Instance.new("TextButton", G)
-		GrenadeButton.Size = UDim2.new(0, 70, 0, 70)
-		GrenadeButton.Position = UDim2.new(1, -125, 1, -240)
-		GrenadeButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-		GrenadeButton.Text = "X"
-		Instance.new("UICorner", GrenadeButton).CornerRadius = UDim.new(1, 0)
-		GrenadeButton.MouseButton1Click:Connect(FireRocket)
-
-		local Layout = {W = UDim2.new(0, 110, 1, -210), A = UDim2.new(0, 30, 1, -130), S = UDim2.new(0, 110, 1, -130), D = UDim2.new(0, 190, 1, -130)}
-		for key, pos in pairs(Layout) do
-			local Btn = Instance.new("TextButton", G)
-			Btn.Size = UDim2.new(0, 70, 0, 70)
-			Btn.Position = pos
-			Btn.BackgroundTransparency = 0.5
-			Btn.BackgroundColor3 = Color3.new(0, 0, 0)
-			Btn.Text = key
-			Btn.TextColor3 = Color3.new(1, 1, 1)
-			Instance.new("UICorner", Btn)
-			Btn.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then MobileInputs[key] = true end end)
-			Btn.InputEnded:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then MobileInputs[key] = false end end)
-		end
-	end
-end
-
--- ===== Functions: physics/movement process =====
-local function Process(dt)
-	if not ScriptEnabled then return end
-	Humanoid.WalkSpeed, Humanoid.JumpPower, Humanoid.AutoRotate = 0, 0, false
-
-	TargetCameraOffset = CrouchHeld and -2.5 or 0
-	CurrentCameraOffset = CurrentCameraOffset + (TargetCameraOffset - CurrentCameraOffset) * math.min(dt * CrouchSpeed, 1)
-	Humanoid.CameraOffset = Vector3.new(0, CurrentCameraOffset, 0)
-
-	WasGrounded = IsGrounded
-	local RayParams = RaycastParams.new()
-	RayParams.FilterDescendantsInstances = {Character}
-	local Res = workspace:Raycast(RootPart.Position, Vector3.new(0, -3.8, 0), RayParams)
-	IsGrounded = Res and Res.Instance and Res.Instance.CanCollide
-
-	if IsGrounded and not WasGrounded then PlayLand() end
-
-	local Cam = workspace.CurrentCamera
-	local Fwd = Vector3.new(Cam.CFrame.LookVector.X, 0, Cam.CFrame.LookVector.Z).Unit
-	local Right = Vector3.new(Cam.CFrame.RightVector.X, 0, Cam.CFrame.RightVector.Z).Unit
-	local Input = Vector3.new()
-	local SPressed = false
-
-	if UserInputService.KeyboardEnabled then
-		if UserInputService:IsKeyDown(Enum.KeyCode.W) then Input += Fwd end
-		if UserInputService:IsKeyDown(Enum.KeyCode.S) then Input -= Fwd SPressed = true end
-		if UserInputService:IsKeyDown(Enum.KeyCode.A) then Input -= Right end
-		if UserInputService:IsKeyDown(Enum.KeyCode.D) then Input += Right end
-	end
-	if MobileInputs.W then Input += Fwd end
-	if MobileInputs.S then Input -= Fwd SPressed = true end
-	if MobileInputs.A then Input -= Right end
-	if MobileInputs.D then Input += Right end
-
-	MoveDir = Input.Magnitude > 0 and Input.Unit or Vector3.new()
-	RootPart.CFrame = CFrame.new(RootPart.Position, RootPart.Position + Fwd)
-
-	local CurrentForwardSpeed = Velocity:Dot(Fwd)
-	local CurrentTotalSpeed = Vector3.new(Velocity.X, 0, Velocity.Z).Magnitude
-
-	if IsGrounded then
-		if not (SpaceHeld and CrouchHeld and CurrentForwardSpeed < -1) then
-			local Speed = Velocity.Magnitude
-			if not SpaceHeld and Speed > 0.1 then
-				local Drop = math.max(Speed, Cfg.stopSpeed) * (CrouchHeld and 0.4 or Cfg.friction) * dt
-				Velocity *= math.max(Speed - Drop, 0) / Speed
-			end
-			local CurS = Velocity:Dot(MoveDir)
-			local AddS = Cfg.runSpeed - CurS
-			if AddS > 0 then Velocity += MoveDir * math.min(Cfg.groundAccel * dt * Cfg.runSpeed, AddS) end
-		end
-
-		if SpaceHeld then
-			PlayJump()
-			if CurrentForwardSpeed < 0.1 and CurrentTotalSpeed > (Cfg.runSpeed + 4) and not SPressed and CrouchHeld then
-				Velocity += (Fwd * ((Cfg.runSpeed - CurrentForwardSpeed) * 0.25 * -1))
-			end
-			Velocity = Vector3.new(Velocity.X, Cfg.jumpPower, Velocity.Z)
-		else
-			Velocity = Vector3.new(Velocity.X, 0, Velocity.Z)
-		end
-
-		if MoveDir.Magnitude > 0.1 then
-			FootstepTimer += dt
-			if FootstepTimer >= FootstepInterval then PlayFootstep() FootstepTimer = 0 end
-		end
-	else
-		local CurAS = Velocity:Dot(MoveDir)
-		local AddAS = Cfg.maxAirSpeed - CurAS
-		if AddAS > 0 then Velocity += MoveDir * math.min(Cfg.airAccel * dt * Cfg.maxAirSpeed, AddAS) end
-		Velocity += Vector3.new(0, -Cfg.gravity * dt, 0)
-	end
-
-	RootPart.AssemblyLinearVelocity = Velocity
-end
-
------/Init/-----
-
--- HUD character setup
-SetupCharacter(Character)
-Player.CharacterAdded:Connect(SetupCharacter)
-
--- HUD update loop (speedometer, health, landing tilt, zoom vignette)
 RunService.RenderStepped:Connect(function(dt)
-	if RootPart and Humanoid and Humanoid.Health > 0 then
-		LastVelocityY = RootPart.AssemblyLinearVelocity.Y
-		Camera.CFrame = Camera.CFrame * LandingOffset * CFrame.Angles(0, 0, LandingRoll)
-
-		local HVel = Vector3.new(RootPart.AssemblyLinearVelocity.X, 0, RootPart.AssemblyLinearVelocity.Z).Magnitude
-		SpeedLabel.Text = string.format("%.1f", HVel * 11.02)
-
-		local CurrentHP = Humanoid.Health
-		HealthValue.Text = string.format("%.0f", CurrentHP)
-
-		if CurrentHP < LastHealth then
-			PlayImpactFlash(CurrentHP <= 20)
-			PlayGlowEffect()
+	UserInputService.MouseIconEnabled = false
+	if cursorEnabled then
+		local mPos = UserInputService:GetMouseLocation()
+		customCursor.Position = UDim2.new(0, mPos.X, 0, mPos.Y)
+	end
+	
+	if rootPart and humanoid and humanoid.Health > 0 then
+		lastVelocityY = rootPart.AssemblyLinearVelocity.Y
+		Camera.CFrame = Camera.CFrame * landingOffset * CFrame.Angles(0, 0, landingRoll)
+		
+		local hVel = Vector3.new(rootPart.AssemblyLinearVelocity.X, 0, rootPart.AssemblyLinearVelocity.Z).Magnitude
+        -- MODIFICACIÓN AUTORIZADA: Factor de conversión exacto para Half-Life Units (11.02)
+		speedLabel.Text = string.format("%.1f", hVel * 11.02)
+		
+		local currentHP = humanoid.Health
+		healthValue.Text = string.format("%.0f", currentHP)
+		
+		if currentHP < lastHealth then
+			playImpactFlash(currentHP <= 20)
+			playGlowEffect()
 		end
-		LastHealth = CurrentHP
+		lastHealth = currentHP
 
-		local TargetAlpha = (CurrentHP <= 20) and 1 or 0
-		ColorLerpAlpha = math.clamp(ColorLerpAlpha + (dt * 0.8 * (TargetAlpha == 1 and 1 or -1)), 0, 1)
-
-		local DynamicColor = HL_ORANGE:Lerp(HL_RED, ColorLerpAlpha)
-
-		if CurrentHP <= 20 then
-			local Pulse = 1 - ((tick() * 1.5) % 1)
-
-			if not ImpactTween or ImpactTween.PlaybackState ~= Enum.PlaybackState.Playing or HealthContainer.BackgroundTransparency >= 0.85 then
-				HealthContainer.BackgroundColor3 = HL_BLACK:Lerp(HL_RED, Pulse * ColorLerpAlpha)
-				HealthContainer.BackgroundTransparency = 0.85
+		local targetAlpha = (currentHP <= 20) and 1 or 0
+		colorLerpAlpha = math.clamp(colorLerpAlpha + (dt * 0.8 * (targetAlpha == 1 and 1 or -1)), 0, 1)
+		
+		local dynamicColor = HL_ORANGE:Lerp(HL_RED, colorLerpAlpha)
+		
+		if currentHP <= 20 then
+			local pulse = 1 - ((tick() * 1.5) % 1)
+			
+			if not impactTween or impactTween.PlaybackState ~= Enum.PlaybackState.Playing or healthContainer.BackgroundTransparency >= 0.85 then
+				healthContainer.BackgroundColor3 = HL_BLACK:Lerp(HL_RED, pulse * colorLerpAlpha)
+				healthContainer.BackgroundTransparency = 0.85
 			end
-
-			HealthValue.TextColor3 = DynamicColor
-			HealthLabelText.TextColor3 = DynamicColor
-			Glow.Color = HL_RED
-			Glow.Thickness = 6 * Pulse
-			Glow.Transparency = 1 - (0.3 * Pulse)
+			
+			healthValue.TextColor3 = dynamicColor
+			healthLabelText.TextColor3 = dynamicColor
+			glow.Color = HL_RED
+			glow.Thickness = 6 * pulse
+			glow.Transparency = 1 - (0.3 * pulse)
 		else
-			HealthContainer.BackgroundColor3 = HL_BLACK
-			HealthContainer.BackgroundTransparency = 0.85
-			HealthValue.TextColor3 = DynamicColor
-			HealthLabelText.TextColor3 = DynamicColor
+			healthContainer.BackgroundColor3 = HL_BLACK
+			healthContainer.BackgroundTransparency = 0.85
+			healthValue.TextColor3 = dynamicColor
+			healthLabelText.TextColor3 = dynamicColor
 		end
-	elseif Humanoid and Humanoid.Health <= 0 then
-		HealthValue.Text = "0"
+	elseif humanoid and humanoid.Health <= 0 then
+		healthValue.Text = "0"
 	end
 end)
 
--- Zoom control (FOV + vignette)
+-- CONTROLS
+ContextActionService:BindAction("ToggleCursor", function(name, state)
+	if state == Enum.UserInputState.Begin then cursorEnabled = not cursorEnabled customCursor.Visible = cursorEnabled end
+end, false, Enum.KeyCode.T)
+
 ContextActionService:BindAction("ActionZoom", function(name, state)
-	if state == Enum.UserInputState.Begin then
+	if state == Enum.UserInputState.Begin then 
+		-- Aplicar zoom de FOV
 		TweenService:Create(Camera, TweenInfo.new(0.25), {FieldOfView = ZOOM_FOV}):Play()
-
-		if VignetteTween then
-			VignetteTween:Cancel()
+		
+		-- [AUTHORIZED MODIFICATION: ACTIVAR VINETA EN TODOS LOS LADOS + ESQUINAS]
+		if vignetteTween then
+			vignetteTween:Cancel()
 		end
-
-		VignetteTween = TweenService:Create(LeftBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0})
-		VignetteTween:Play()
-		TweenService:Create(RightBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-		TweenService:Create(TopBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-		TweenService:Create(BottomBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-		TweenService:Create(CornerTopLeft, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-		TweenService:Create(CornerTopRight, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-		TweenService:Create(CornerBottomLeft, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-		TweenService:Create(CornerBottomRight, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
-	elseif state == Enum.UserInputState.End then
+		
+		-- Mostrar todos los bordes y esquinas
+		vignetteTween = TweenService:Create(leftBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0
+		})
+		vignetteTween:Play()
+		
+		TweenService:Create(rightBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0
+		}):Play()
+		
+		TweenService:Create(topBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0
+		}):Play()
+		
+		TweenService:Create(bottomBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0
+		}):Play()
+		
+		-- Mostrar esquinas
+		TweenService:Create(cornerTopLeft, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0
+		}):Play()
+		
+		TweenService:Create(cornerTopRight, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0
+		}):Play()
+		
+		TweenService:Create(cornerBottomLeft, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0
+		}):Play()
+		
+		TweenService:Create(cornerBottomRight, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0
+		}):Play()
+		
+	elseif state == Enum.UserInputState.End then 
+		-- Quitar zoom de FOV
 		TweenService:Create(Camera, TweenInfo.new(0.25), {FieldOfView = DEFAULT_FOV}):Play()
-
-		if VignetteTween then
-			VignetteTween:Cancel()
+		
+		-- [AUTHORIZED MODIFICATION: DESACTIVAR VINETA EN TODOS LOS LADOS + ESQUINAS]
+		if vignetteTween then
+			vignetteTween:Cancel()
 		end
-
-		VignetteTween = TweenService:Create(LeftBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1})
-		VignetteTween:Play()
-		TweenService:Create(RightBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-		TweenService:Create(TopBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-		TweenService:Create(BottomBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-		TweenService:Create(CornerTopLeft, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-		TweenService:Create(CornerTopRight, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-		TweenService:Create(CornerBottomLeft, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-		TweenService:Create(CornerBottomRight, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+		
+		-- Ocultar todos los bordes y esquinas gradualmente
+		vignetteTween = TweenService:Create(leftBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1
+		})
+		vignetteTween:Play()
+		
+		TweenService:Create(rightBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1
+		}):Play()
+		
+		TweenService:Create(topBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1
+		}):Play()
+		
+		TweenService:Create(bottomBorder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1
+		}):Play()
+		
+		-- Ocultar esquinas
+		TweenService:Create(cornerTopLeft, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1
+		}):Play()
+		
+		TweenService:Create(cornerTopRight, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1
+		}):Play()
+		
+		TweenService:Create(cornerBottomLeft, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1
+		}):Play()
+		
+		TweenService:Create(cornerBottomRight, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1
+		}):Play()
 	end
 end, true, Enum.KeyCode.Z)
 
--- Back-view flip
 ContextActionService:BindAction("BackViewAction", function(name, state)
-	if state == Enum.UserInputState.Begin or state == Enum.UserInputState.End then
-		Camera.CFrame = Camera.CFrame * CFrame.Angles(0, math.pi, 0)
-	end
+	if state == Enum.UserInputState.Begin or state == Enum.UserInputState.End then Camera.CFrame = Camera.CFrame * CFrame.Angles(0, math.pi, 0) end
 end, true, Enum.KeyCode.Q)
 
--- Mobile GUI
-CreateGui()
+-- Source Engine Movement for Roblox + ABH (Crouch-Only) + HL1/HL2/CS Jump Sounds + Crouch Sliding
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- Movement input
+local player = Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
+
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local root = character:WaitForChild("HumanoidRootPart")
+
+local scriptEnabled = true
+local spaceHeld = false
+local crouchHeld = false 
+local mobileInputs = {W = false, A = false, S = false, D = false}
+
+local velocity = Vector3.new()
+local isGrounded = false
+local wasGrounded = false
+local moveDir = Vector3.new()
+
+local footstepTimer = 0
+local footstepInterval = 0.35
+local lastFootstepIndex = 0
+
+-- Animación de cámara
+local currentCameraOffset = 0
+local targetCameraOffset = 0
+local crouchSpeed = 15 
+
+-- Configuration (Física Original Intacta)
+local cfg = {
+    groundAccel = 25,
+    airAccel = 10000,
+    maxAirSpeed = 1,
+    runSpeed = 26,
+    jumpPower = 35,
+    gravity = 100,
+    friction = 4,
+    stopSpeed = 6,
+    abhMultiplier = -5,
+    postImpulseGain = 0,
+    surfSlopeLimit = 4 
+}
+
+local rocketBlastRadius = 25
+
+-- [RESTAURADO] Tabla Completa de Sonidos
+local footstepSounds = {
+    Slate = {"rbxassetid://81623756670923", "rbxassetid://78754179999047", "rbxassetid://79418255155423", "rbxassetid://112240321395589"},
+    Concrete = {"rbxassetid://81623756670923", "rbxassetid://78754179999047", "rbxassetid://79418255155423", "rbxassetid://112240321395589"},
+    Brick = {"rbxassetid://81623756670923", "rbxassetid://78754179999047", "rbxassetid://79418255155423", "rbxassetid://112240321395589"},
+    Wood = {"rbxassetid://87921439933530", "rbxassetid://89597871459985", "rbxassetid://139932856876296", "rbxassetid://75643573822739"},
+    WoodPlanks = {"rbxassetid://87921439933530", "rbxassetid://89597871459985", "rbxassetid://139932856876296", "rbxassetid://75643573822739"},
+    Metal = {"rbxassetid://78580994772675", "rbxassetid://79005288283137", "rbxassetid://98060045106272", "rbxassetid://122668036980895"},
+    DiamondPlate = {"rbxassetid://78580994772675", "rbxassetid://79005288283137", "rbxassetid://98060045106272", "rbxassetid://122668036980895"},
+    CorrodedMetal = {"rbxassetid://78580994772675", "rbxassetid://79005288283137", "rbxassetid://98060045106272", "rbxassetid://122668036980895"},
+    Grass = {"rbxassetid://105277634319381", "rbxassetid://98069158661569", "rbxassetid://135182192451997", "rbxassetid://116425333836106"},
+    Sand = {"rbxassetid://84209465430801", "rbxassetid://115151668857364", "rbxassetid://93919782627384", "rbxassetid://105793766638092"},
+    Mud = {"rbxassetid://125078502573216", "rbxassetid://119139580459950", "rbxassetid://132103348107931", "rbxassetid://137748446979624"},
+    Snow = {"rbxassetid://90615555465225", "rbxassetid://125184282810966", "rbxassetid://114138676251211", "rbxassetid://132337775532551"},
+    Plastic = {"rbxassetid://135712042029119", "rbxassetid://90507702118699", "rbxassetid://98172042741214", "rbxassetid://106319783012941"},
+    SmoothPlastic = {"rbxassetid://135712042029119", "rbxassetid://90507702118699", "rbxassetid://98172042741214", "rbxassetid://106319783012941"},
+    Fabric = {"rbxassetid://134707629631621", "rbxassetid://120658421045233", "rbxassetid://82315729709772", "rbxassetid://101186178877521"},
+    Glass = {"rbxassetid://88813292437651", "rbxassetid://126359516625890", "rbxassetid://133178229418641", "rbxassetid://80572007771746"},
+    Ice = {"rbxassetid://105786448375088", "rbxassetid://106093339008891", "rbxassetid://86217431358704", "rbxassetid://131109062323793"},
+    Air = {""},
+}
+
+local jumpSounds = {"rbxassetid://142258831", "rbxassetid://142258874", "rbxassetid://142258905"}
+
+-- [RESTAURADO] Funciones de Sonido y Materiales
+local function getFloorMaterial()
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {character}
+    local result = workspace:Raycast(root.Position, Vector3.new(0, -3.8, 0), rayParams)
+    if result and result.Instance then
+        local matName = result.Instance.Material.Name
+        return footstepSounds[matName] and matName or "Slate"
+    end
+    return "Slate"
+end
+
+local function playFootstep(vol)
+    local material = getFloorMaterial()
+    local soundTable = footstepSounds[material] or footstepSounds.Slate
+    local sound = Instance.new("Sound", workspace)
+    lastFootstepIndex = (lastFootstepIndex % #soundTable) + 1
+    sound.SoundId = soundTable[lastFootstepIndex]
+    sound.Volume = vol or 1.2
+    sound.PlaybackSpeed = 1.0 + math.random(-10, 10) / 100
+    sound:Play()
+    game:GetService("Debris"):AddItem(sound, 2)
+end
+
+local function playJump()
+    local sound = Instance.new("Sound", workspace)
+    sound.SoundId = jumpSounds[math.random(1, #jumpSounds)]
+    sound.Volume = 1.3
+    sound.PlaybackSpeed = 1.0 + math.random(-5, 5) / 100
+    sound:Play()
+    game:GetService("Debris"):AddItem(sound, 2)
+    playFootstep(0.6)
+end
+
+local function playLand()
+    playFootstep(1.3)
+    if velocity.Y < -60 then
+        local impact = Instance.new("Sound", workspace)
+        impact.SoundId = "rbxassetid://155416568"
+        impact.Volume = 1.5
+        impact:Play()
+        game:GetService("Debris"):AddItem(impact, 2)
+    end
+end
+
+-- Rocket logic (Fuego de Granada/X)
+local function fireRocket()
+    if not scriptEnabled then return end
+    local cam = workspace.CurrentCamera
+    local direction = cam.CFrame.LookVector
+    local rocket = Instance.new("Part", workspace)
+    rocket.Size = Vector3.new(0.5, 0.5, 2)
+    rocket.CFrame = CFrame.lookAt(root.Position + direction * 3, root.Position + direction * 4)
+    rocket.Velocity = direction * 150
+    rocket.CanCollide = false
+    rocket.BrickColor = BrickColor.new("Really red")
+    rocket.Material = Enum.Material.Neon
+    
+    local sound = Instance.new("Sound", root)
+    sound.SoundId = "rbxassetid://2156366946"
+    sound:Play()
+    game.Debris:AddItem(sound, 2)
+
+    rocket.Touched:Connect(function(hit)
+        if hit and not hit:IsDescendantOf(character) then
+            local pos = rocket.Position
+            local explosion = Instance.new("Explosion", workspace)
+            explosion.Position = pos
+            explosion.BlastRadius = rocketBlastRadius
+            explosion.BlastPressure = 0
+            if (root.Position - pos).Magnitude <= rocketBlastRadius then
+                velocity += (root.Position - pos).Unit * 100
+            end
+            rocket:Destroy()
+        end
+    end)
+    game.Debris:AddItem(rocket, 5)
+end
+
+local function toggleScript()
+    scriptEnabled = not scriptEnabled
+    if not scriptEnabled then
+        humanoid.WalkSpeed, humanoid.JumpPower, humanoid.AutoRotate = 16, 50, true
+        humanoid.CameraOffset = Vector3.new(0,0,0)
+        crouchHeld, velocity = false, Vector3.new()
+    end
+end
+
+-- [MODIFICADO] UI LÓGICA (Solo móvil, alineado a lo pedido)
+local function createGui()
+    local g = Instance.new("ScreenGui", gui)
+    g.ResetOnSpawn = false
+    g.Name = "SourceDBG"
+    
+    local toggle = Instance.new("TextButton", g)
+    toggle.Size = UDim2.new(0, 60, 0, 25)
+    toggle.Position = UDim2.new(1, -70, 0, 80)
+    toggle.BackgroundColor3 = Color3.fromRGB(80, 255, 130)
+    toggle.Text = "ON"
+    toggle.MouseButton1Click:Connect(toggleScript)
+
+    -- Fix: Solo aparece si NO hay teclado (PC)
+    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    if isMobile then
+        -- Salto (Tamaño y posición Roblox Original)
+        local jumpButton = Instance.new("TextButton", g)
+        jumpButton.Size = UDim2.new(0, 110, 0, 110)
+        jumpButton.Position = UDim2.new(1, -145, 1, -155)
+        jumpButton.BackgroundTransparency = 0.5
+        jumpButton.BackgroundColor3 = Color3.new(0,0,0)
+        jumpButton.Text = "JUMP"
+        jumpButton.TextColor3 = Color3.new(1,1,1)
+        Instance.new("UICorner", jumpButton).CornerRadius = UDim.new(1, 0)
+        jumpButton.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then spaceHeld = true end end)
+        jumpButton.InputEnded:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then spaceHeld = false end end)
+        
+        -- Crouch (Al lado del salto)
+        local crouchButton = Instance.new("TextButton", g)
+        crouchButton.Size = UDim2.new(0, 80, 0, 80)
+        crouchButton.Position = UDim2.new(1, -235, 1, -125)
+        crouchButton.BackgroundTransparency = 0.5
+        crouchButton.BackgroundColor3 = Color3.new(0,0,0)
+        crouchButton.Text = "C"
+        crouchButton.TextColor3 = Color3.new(1,1,1)
+        Instance.new("UICorner", crouchButton).CornerRadius = UDim.new(1, 0)
+        crouchButton.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then crouchHeld = true end end)
+        crouchButton.InputEnded:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then crouchHeld = false end end)
+
+        -- Granada (Arriba del salto)
+        local grenadeButton = Instance.new("TextButton", g)
+        grenadeButton.Size = UDim2.new(0, 70, 0, 70)
+        grenadeButton.Position = UDim2.new(1, -125, 1, -240)
+        grenadeButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+        grenadeButton.Text = "X"
+        Instance.new("UICorner", grenadeButton).CornerRadius = UDim.new(1, 0)
+        grenadeButton.MouseButton1Click:Connect(fireRocket)
+
+        -- WASD Izquierda
+        local layout = {W = UDim2.new(0, 110, 1, -210), A = UDim2.new(0, 30, 1, -130), S = UDim2.new(0, 110, 1, -130), D = UDim2.new(0, 190, 1, -130)}
+        for key, pos in pairs(layout) do
+            local btn = Instance.new("TextButton", g)
+            btn.Size = UDim2.new(0, 70, 0, 70)
+            btn.Position = pos
+            btn.BackgroundTransparency = 0.5
+            btn.BackgroundColor3 = Color3.new(0,0,0)
+            btn.Text = key
+            btn.TextColor3 = Color3.new(1,1,1)
+            Instance.new("UICorner", btn)
+            btn.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then mobileInputs[key] = true end end)
+            btn.InputEnded:Connect(function(io) if io.UserInputType == Enum.UserInputType.Touch then mobileInputs[key] = false end end)
+        end
+    end
+end
+createGui()
+
+-- [RESTAURADO COMPLETO] Proceso de Física y Movimiento (ABH + PASOS)
+local function process(dt)
+    if not scriptEnabled then return end
+    humanoid.WalkSpeed, humanoid.JumpPower, humanoid.AutoRotate = 0, 0, false
+
+    targetCameraOffset = crouchHeld and -2.5 or 0
+    currentCameraOffset = currentCameraOffset + (targetCameraOffset - currentCameraOffset) * math.min(dt * crouchSpeed, 1)
+    humanoid.CameraOffset = Vector3.new(0, currentCameraOffset, 0)
+
+    wasGrounded = isGrounded
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {character}
+    local res = workspace:Raycast(root.Position, Vector3.new(0, -3.8, 0), rayParams)
+    isGrounded = res and res.Instance and res.Instance.CanCollide
+
+    if isGrounded and not wasGrounded then playLand() end
+
+    local cam = workspace.CurrentCamera
+    local fwd = Vector3.new(cam.CFrame.LookVector.X, 0, cam.CFrame.LookVector.Z).Unit
+    local right = Vector3.new(cam.CFrame.RightVector.X, 0, cam.CFrame.RightVector.Z).Unit
+    local input = Vector3.new()
+    local sPressed = false
+
+    -- Entrada Híbrida
+    if UserInputService.KeyboardEnabled then
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then input += fwd end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then input -= fwd sPressed = true end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then input -= right end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then input += right end
+    end
+    if mobileInputs.W then input += fwd end
+    if mobileInputs.S then input -= fwd sPressed = true end
+    if mobileInputs.A then input -= right end
+    if mobileInputs.D then input += right end
+    
+    moveDir = input.Magnitude > 0 and input.Unit or Vector3.new()
+    root.CFrame = CFrame.new(root.Position, root.Position + fwd)
+
+    local currentForwardSpeed = velocity:Dot(fwd)
+    local currentTotalSpeed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
+
+    if isGrounded then
+        if not (spaceHeld and crouchHeld and currentForwardSpeed < -1) then
+            -- Friction
+            local speed = velocity.Magnitude
+            if not spaceHeld and speed > 0.1 then
+                local drop = math.max(speed, cfg.stopSpeed) * (crouchHeld and 0.4 or cfg.friction) * dt
+                velocity *= math.max(speed - drop, 0) / speed
+            end
+            -- Accel Ground
+            local curS = velocity:Dot(moveDir)
+            local addS = cfg.runSpeed - curS
+            if addS > 0 then velocity += moveDir * math.min(cfg.groundAccel * dt * cfg.runSpeed, addS) end
+        end
+
+        if spaceHeld then
+            playJump()
+            -- ABH Lógica
+            if currentForwardSpeed < 0.1 and currentTotalSpeed > (cfg.runSpeed + 4) and not sPressed and crouchHeld then 
+                velocity += (fwd * ((cfg.runSpeed - currentForwardSpeed) * 0.25 * -1))
+            end
+            velocity = Vector3.new(velocity.X, cfg.jumpPower, velocity.Z)
+        else
+            velocity = Vector3.new(velocity.X, 0, velocity.Z)
+        end
+        
+        -- PASOS (Restaurado)
+        if moveDir.Magnitude > 0.1 then
+            footstepTimer += dt
+            if footstepTimer >= footstepInterval then playFootstep() footstepTimer = 0 end
+        end
+    else
+        -- Air Accel
+        local curAS = velocity:Dot(moveDir)
+        local addAS = cfg.maxAirSpeed - curAS
+        if addAS > 0 then velocity += moveDir * math.min(cfg.airAccel * dt * cfg.maxAirSpeed, addAS) end
+        velocity += Vector3.new(0, -cfg.gravity * dt, 0)
+    end
+    
+    root.AssemblyLinearVelocity = velocity
+end
+
+-- [RESTAURADO] Daño de caída persistente
+local FALL_THRESHOLD = -100
+local FIXED_DAMAGE = 10
+local function iniciarDanioDeCaida(char)
+    local hum = char:WaitForChild("Humanoid")
+    local rtp = char:WaitForChild("HumanoidRootPart")
+    local lastV = 0
+    RunService.Heartbeat:Connect(function()
+        if not char:IsDescendantOf(workspace) then return end
+        local curV = rtp.AssemblyLinearVelocity.Y
+        if lastV < FALL_THRESHOLD and curV >= -1 then
+            hum.Health = math.max(0, hum.Health - FIXED_DAMAGE)
+        end
+        lastV = curV
+    end)
+end
+
+-- Conexiones finales
 UserInputService.InputBegan:Connect(function(i, gpe)
-	if gpe then return end
-	if i.KeyCode == Enum.KeyCode.Space then SpaceHeld = true
-	elseif i.KeyCode == Enum.KeyCode.C then CrouchHeld = true
-	elseif i.KeyCode == Enum.KeyCode.X then FireRocket()
-	elseif i.KeyCode == Enum.KeyCode.R then ToggleScript() end
+    if gpe then return end
+    if i.KeyCode == Enum.KeyCode.Space then spaceHeld = true
+    elseif i.KeyCode == Enum.KeyCode.C then crouchHeld = true
+    elseif i.KeyCode == Enum.KeyCode.X then fireRocket()
+    elseif i.KeyCode == Enum.KeyCode.R then toggleScript() end
 end)
-UserInputService.InputEnded:Connect(function(i)
-	if i.KeyCode == Enum.KeyCode.Space then SpaceHeld = false
-	elseif i.KeyCode == Enum.KeyCode.C then CrouchHeld = false end
+UserInputService.InputEnded:Connect(function(i) 
+    if i.KeyCode == Enum.KeyCode.Space then spaceHeld = false 
+    elseif i.KeyCode == Enum.KeyCode.C then crouchHeld = false end 
 end)
-
--- Physics loop
-RunService.Heartbeat:Connect(function(dt)
-	if Humanoid and Humanoid.Health > 0 then Process(dt) end
+RunService.Heartbeat:Connect(function(dt) if humanoid and humanoid.Health > 0 then process(dt) end end)
+player.CharacterAdded:Connect(function(char)
+    character, humanoid, root = char, char:WaitForChild("Humanoid"), char:WaitForChild("HumanoidRootPart")
+    velocity = Vector3.new()
+    iniciarDanioDeCaida(char)
 end)
-
--- Character respawn reset (movement state)
-Player.CharacterAdded:Connect(function(char)
-	Character = char
-	Humanoid = char:WaitForChild("Humanoid")
-	RootPart = char:WaitForChild("HumanoidRootPart")
-	Velocity = Vector3.new()
-end)
+if player.Character then task.spawn(iniciarDanioDeCaida, player.Character) end
