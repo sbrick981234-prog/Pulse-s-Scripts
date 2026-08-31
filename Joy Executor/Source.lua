@@ -134,7 +134,7 @@ Icon.Name = "Icon"
 Icon.Size = UDim2.fromOffset(18, 18)
 Icon.Position = UDim2.fromOffset(7, 6)
 Icon.BackgroundTransparency = 1
-Icon.Image = "" -- rbxassetid://YOUR_ID
+Icon.Image = "4791153196"
 Icon.ScaleType = Enum.ScaleType.Fit
 Icon.Parent = TitleBar
 
@@ -145,7 +145,7 @@ Title.Name = "Title"
 Title.Size = UDim2.new(1, -160, 0, 30)
 Title.Position = UDim2.fromOffset(31, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "Larp"
+Title.Text = "Joy Executor"
 Title.TextColor3 = CONFIG.Colors.Text
 Title.TextSize = 13
 Title.Font = Enum.Font.Arial
