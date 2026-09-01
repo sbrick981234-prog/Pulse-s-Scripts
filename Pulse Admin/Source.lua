@@ -157,9 +157,9 @@ local function CreateSound(Id, Volume, Parent)
 	return Sound
 end
 
-local HoverSound = CreateSound(9118823107, 0.2, Main)
-local ClickSound = CreateSound(9118823107, 0.3, Main)
-local ToggleSound = CreateSound(9118823107, 0.25, Main)
+local HoverSound = CreateSound(88442833509532, 0.2, Main)
+local ClickSound = CreateSound(88442833509532, 0.3, Main)
+local ToggleSound = CreateSound(88442833509532, 0.25, Main)
 
 -----/TitleBar/-----
 local TitleBar = Instance.new("Frame")
