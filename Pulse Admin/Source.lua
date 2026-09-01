@@ -295,6 +295,12 @@ List.AutomaticCanvasSize = Enum.AutomaticSize.Y
 List.CanvasSize = UDim2.new()
 List.Parent = Main
 
+local ListStroke = Instance.new("UIStroke")
+ListStroke.Color = Color3.fromRGB(255, 255, 255)
+ListStroke.Transparency = 0.8
+ListStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+ListStroke.Parent = List
+
 local ListPadding = Instance.new("UIPadding")
 ListPadding.PaddingRight = UDim.new(0, 3)
 ListPadding.PaddingLeft = UDim.new(0, 3)
