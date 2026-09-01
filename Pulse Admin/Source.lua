@@ -415,15 +415,6 @@ CommandBar.FocusLost:Connect(function(EnterPressed)
 	end
 end)
 
-Clear.MouseButton1Click:Connect(function()
-	CommandBar.Text = ""
-	Search.Text = ""
-end)
-
-Execute.MouseButton1Click:Connect(function()
-	ExecuteCommand(CommandBar.Text)
-end)
-
 -----/Toggle/-----
 local Open = true
 local NormalSize = UDim2.fromOffset(420, 330)
