@@ -33,7 +33,47 @@ local Commands = {
 			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
 
 			if Humanoid then
+				Humanoid.UseJumpPower = true
 				Humanoid.JumpPower = tonumber(Args[1]) or 50
+			end
+		end
+	},
+
+	{
+		Name = "gravity",
+		Aliases = {"grav"},
+		Description = "Changes local gravity",
+
+		Execute = function(Args)
+			workspace.Gravity = tonumber(Args[1]) or 196.2
+		end
+	},
+
+	{
+		Name = "hipheight",
+		Aliases = {"hh"},
+		Description = "Changes your hip height",
+
+		Execute = function(Args)
+			local Character = Player.Character
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+			if Humanoid then
+				Humanoid.HipHeight = tonumber(Args[1]) or 2
+			end
+		end
+	},
+
+	{
+		Name = "fov",
+		Aliases = {"fieldofview"},
+		Description = "Changes camera field of view",
+
+		Execute = function(Args)
+			local Camera = workspace.CurrentCamera
+
+			if Camera then
+				Camera.FieldOfView = tonumber(Args[1]) or 70
 			end
 		end
 	},
@@ -54,6 +94,123 @@ local Commands = {
 	},
 
 	{
+		Name = "unsit",
+		Aliases = {"stand"},
+		Description = "Makes your character stand",
+
+		Execute = function()
+			local Character = Player.Character
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+			if Humanoid then
+				Humanoid.Sit = false
+			end
+		end
+	},
+
+	{
+		Name = "platformstand",
+		Aliases = {"ps"},
+		Description = "Toggles PlatformStand",
+
+		Execute = function()
+			local Character = Player.Character
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+			if Humanoid then
+				Humanoid.PlatformStand = not Humanoid.PlatformStand
+			end
+		end
+	},
+
+	{
+		Name = "freeze",
+		Aliases = {"anchor"},
+		Description = "Freezes your character",
+
+		Execute = function()
+			local Character = Player.Character
+
+			if Character then
+				for _, Object in ipairs(Character:GetDescendants()) do
+					if Object:IsA("BasePart") then
+						Object.Anchored = true
+					end
+				end
+			end
+		end
+	},
+
+	{
+		Name = "unfreeze",
+		Aliases = {"unanchor"},
+		Description = "Unfreezes your character",
+
+		Execute = function()
+			local Character = Player.Character
+
+			if Character then
+				for _, Object in ipairs(Character:GetDescendants()) do
+					if Object:IsA("BasePart") then
+						Object.Anchored = false
+					end
+				end
+			end
+		end
+	},
+
+	{
+		Name = "invisible",
+		Aliases = {"invis"},
+		Description = "Makes your character locally invisible",
+
+		Execute = function()
+			local Character = Player.Character
+
+			if Character then
+				for _, Object in ipairs(Character:GetDescendants()) do
+					if Object:IsA("BasePart") or Object:IsA("Decal") then
+						Object.LocalTransparencyModifier = 1
+					end
+				end
+			end
+		end
+	},
+
+	{
+		Name = "visible",
+		Aliases = {"vis"},
+		Description = "Makes your character visible",
+
+		Execute = function()
+			local Character = Player.Character
+
+			if Character then
+				for _, Object in ipairs(Character:GetDescendants()) do
+					if Object:IsA("BasePart") or Object:IsA("Decal") then
+						Object.LocalTransparencyModifier = 0
+					end
+				end
+			end
+		end
+	},
+
+	{
+		Name = "reset",
+		Aliases = {"kill", "suicide"},
+		Description = "Resets your character",
+
+		Execute = function()
+			local Character = Player.Character
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+			if Humanoid then
+				Humanoid.Health = 0
+			end
+		end
+	},
+
+	{
 		Name = "respawn",
 		Aliases = {"re"},
 		Description = "Respawns your character",
@@ -68,12 +225,115 @@ local Commands = {
 	},
 
 	{
-		Name = "fly",
-		Aliases = {},
-		Description = "Fly",
+		Name = "refresh",
+		Aliases = {"ref"},
+		Description = "Refreshes your character",
 
 		Execute = function()
-			warn("[Admin] Fly command")
+			local Character = Player.Character
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+			if Humanoid then
+				Humanoid.Health = 0
+			end
+		end
+	},
+
+	{
+		Name = "tools",
+		Aliases = {"gettools"},
+		Description = "Moves your backpack tools back into your inventory",
+
+		Execute = function()
+			local Character = Player.Character
+			local Backpack = Player:FindFirstChildOfClass("Backpack")
+
+			if Character and Backpack then
+				for _, Object in ipairs(Character:GetChildren()) do
+					if Object:IsA("Tool") then
+						Object.Parent = Backpack
+					end
+				end
+			end
+		end
+	},
+
+	{
+		Name = "equip",
+		Aliases = {"eq"},
+		Description = "Equips a tool by name",
+
+		Execute = function(Args)
+			local Character = Player.Character
+			local Backpack = Player:FindFirstChildOfClass("Backpack")
+
+			if not Character or not Backpack then
+				return
+			end
+
+			local ToolName = table.concat(Args, " ")
+			local Tool = Backpack:FindFirstChild(ToolName)
+
+			if Tool and Tool:IsA("Tool") then
+				Tool.Parent = Character
+			end
+		end
+	},
+
+	{
+		Name = "unequip",
+		Aliases = {"uneq"},
+		Description = "Unequips your current tools",
+
+		Execute = function()
+			local Character = Player.Character
+			local Backpack = Player:FindFirstChildOfClass("Backpack")
+
+			if not Character or not Backpack then
+				return
+			end
+
+			for _, Object in ipairs(Character:GetChildren()) do
+				if Object:IsA("Tool") then
+					Object.Parent = Backpack
+				end
+			end
+		end
+	},
+
+	{
+		Name = "state",
+		Aliases = {"humanoidstate"},
+		Description = "Changes humanoid state",
+
+		Execute = function(Args)
+			local Character = Player.Character
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+			if not Humanoid or not Args[1] then
+				return
+			end
+
+			local State = Enum.HumanoidStateType[Args[1]]
+
+			if State then
+				Humanoid:ChangeState(State)
+			end
+		end
+	},
+
+	{
+		Name = "sitdown",
+		Aliases = {"s"},
+		Description = "Forces sitting state",
+
+		Execute = function()
+			local Character = Player.Character
+			local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+
+			if Humanoid then
+				Humanoid:ChangeState(Enum.HumanoidStateType.Seated)
+			end
 		end
 	},
 
@@ -84,6 +344,16 @@ local Commands = {
 
 		Execute = function()
 			warn("[Admin] Noclip command")
+		end
+	},
+
+	{
+		Name = "fly",
+		Aliases = {},
+		Description = "Fly",
+
+		Execute = function()
+			warn("[Admin] Fly command")
 		end
 	},
 }
