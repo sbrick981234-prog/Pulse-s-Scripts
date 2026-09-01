@@ -296,100 +296,16 @@ List.CanvasSize = UDim2.new()
 List.Parent = Main
 
 local ListPadding = Instance.new("UIPadding")
-ListPadding.PaddingRight = UDim.new(0, 4)
-ListPadding.PaddingLeft = UDim.new(0, 4)
-ListPadding.PaddingTop = UDim.new(0, 2)
-ListPadding.PaddingBottom = UDim.new(0, 10)
+ListPadding.PaddingRight = UDim.new(0, 3)
+ListPadding.PaddingLeft = UDim.new(0, 3)
+ListPadding.PaddingTop = UDim.new(0, 1)
+ListPadding.PaddingBottom = UDim.new(0, 1)
 ListPadding.Parent = List
 
 local Layout = Instance.new("UIListLayout")
 Layout.Padding = UDim.new(0, 5)
 Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 Layout.Parent = List
-
------/CommandButtons/-----
-local function CreateButton(Name, Position)
-	local Button = Instance.new("TextButton")
-	Button.Name = Name
-	Button.Size = UDim2.fromOffset(185, 40)
-	Button.Position = Position
-	Button.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-	Button.Text = Name
-	Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-	Button.Font = Enum.Font.Code
-	Button.TextSize = 18
-	Button.BorderSizePixel = 0
-	Button.AutoButtonColor = false
-	Button.Parent = Main
-
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 10)
-	Corner.Parent = Button
-
-	local Stroke = Instance.new("UIStroke")
-	Stroke.Color = Color3.fromRGB(255, 255, 255)
-	Stroke.Transparency = 0.8
-	Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	Stroke.Parent = Button
-
-	Button.MouseEnter:Connect(function()
-		HoverSound:Play()
-
-		TweenService:Create(
-			Button,
-			TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{
-				BackgroundColor3 = Color3.fromRGB(18, 18, 18),
-				Size = UDim2.fromOffset(190, 42)
-			}
-		):Play()
-	end)
-
-	Button.MouseLeave:Connect(function()
-		TweenService:Create(
-			Button,
-			TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{
-				BackgroundColor3 = Color3.fromRGB(10, 10, 10),
-				Size = UDim2.fromOffset(185, 40)
-			}
-		):Play()
-	end)
-
-	Button.MouseButton1Down:Connect(function()
-		ClickSound:Play()
-
-		TweenService:Create(
-			Button,
-			TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{
-				Size = UDim2.fromOffset(180, 38)
-			}
-		):Play()
-	end)
-
-	Button.MouseButton1Up:Connect(function()
-		TweenService:Create(
-			Button,
-			TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{
-				Size = UDim2.fromOffset(190, 42)
-			}
-		):Play()
-	end)
-
-	return Button
-end
-
-local Clear = CreateButton(
-	"Clear",
-	UDim2.new(0, 15, 1, -50)
-)
-
-local Execute = CreateButton(
-	"Execute",
-	UDim2.new(1, -200, 1, -50)
-)
 
 -----/CommandList/-----
 local function CreateCommandButton(Command)
