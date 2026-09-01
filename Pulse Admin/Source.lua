@@ -157,7 +157,7 @@ local function CreateSound(Id, Volume, Parent)
 	return Sound
 end
 
-local HoverSound = CreateSound(88442833509532, 0.2, Main)
+local HoverSound = CreateSound(139719503904449, 0.2, Main)
 local ClickSound = CreateSound(88442833509532, 0.3, Main)
 local ToggleSound = CreateSound(88442833509532, 0.25, Main)
 
@@ -294,12 +294,6 @@ List.ScrollingDirection = Enum.ScrollingDirection.Y
 List.AutomaticCanvasSize = Enum.AutomaticSize.Y
 List.CanvasSize = UDim2.new()
 List.Parent = Main
-
-local ListStroke = Instance.new("UIStroke")
-ListStroke.Color = Color3.fromRGB(255, 255, 255)
-ListStroke.Transparency = 0.8
-ListStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-ListStroke.Parent = List
 
 local ListPadding = Instance.new("UIPadding")
 ListPadding.PaddingRight = UDim.new(0, 3)
