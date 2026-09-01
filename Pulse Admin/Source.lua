@@ -685,34 +685,5 @@ CommandBar.FocusLost:Connect(function(EnterPressed)
 	end
 end)
 
------/Toggle/-----
-local Open = true
-local NormalSize = UDim2.fromOffset(420, 330)
-local ClosedSize = UDim2.fromOffset(420, 0)
-
-UserInputService.InputBegan:Connect(function(Input, Processed)
-	if Processed then
-		return
-	end
-
-	if Input.KeyCode == Enum.KeyCode.RightShift then
-		Open = not Open
-
-		ToggleSound:Play()
-
-		TweenService:Create(
-			Main,
-			TweenInfo.new(
-				0.25,
-				Enum.EasingStyle.Quint,
-				Enum.EasingDirection.Out
-			),
-			{
-				Size = Open and NormalSize or ClosedSize
-			}
-		):Play()
-	end
-end)
-
 -----/Init/-----
 RefreshCommands()
