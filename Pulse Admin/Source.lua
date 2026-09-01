@@ -299,7 +299,7 @@ local ListPadding = Instance.new("UIPadding")
 ListPadding.PaddingRight = UDim.new(0, 4)
 ListPadding.PaddingLeft = UDim.new(0, 4)
 ListPadding.PaddingTop = UDim.new(0, 2)
-ListPadding.PaddingLeft = UDim.new(0, 10)
+ListPadding.PaddingBottom = UDim.new(0, 10)
 ListPadding.Parent = List
 
 local Layout = Instance.new("UIListLayout")
