@@ -7,7 +7,7 @@ local Player = Players.LocalPlayer
 
 -----/Main/-----
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ScannerUI"
+ScreenGui.Name = "PulseScanner"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 
