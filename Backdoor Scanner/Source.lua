@@ -6,7 +6,7 @@ local UserInputService = game:GetService("UserInputService")
 -----/Variables/-----
 local Player = Players.LocalPlayer
 
------/Main/-----
+-----/Function/-----
 local function MakeDraggable(dragObject: GuiObject, tweenInfo: TweenInfo?)
 	local dragToggle = false
 	local dragInput: InputObject?
@@ -78,6 +78,7 @@ local function MakeDraggable(dragObject: GuiObject, tweenInfo: TweenInfo?)
 	}
 end
 
+-----/Main/-----
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PulseScanner"
 ScreenGui.ResetOnSpawn = false
