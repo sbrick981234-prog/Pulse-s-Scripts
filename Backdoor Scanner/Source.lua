@@ -29,6 +29,7 @@ MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 MainStroke.Parent = Main
 
 local MainShadow = Instance.new("UIShadow")
+MainShadow.Parent = Main
 
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
