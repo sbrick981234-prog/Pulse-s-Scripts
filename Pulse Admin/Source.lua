@@ -566,8 +566,8 @@ List.CanvasSize = UDim2.new()
 List.Parent = Main
 
 local ListPadding = Instance.new("UIPadding")
-ListPadding.PaddingRight = UDim.new(0, 3)
-ListPadding.PaddingLeft = UDim.new(0, 3)
+ListPadding.PaddingRight = UDim.new(0, 0)
+ListPadding.PaddingLeft = UDim.new(0, 5)
 ListPadding.PaddingTop = UDim.new(0, 1)
 ListPadding.PaddingBottom = UDim.new(0, 1)
 ListPadding.Parent = List
