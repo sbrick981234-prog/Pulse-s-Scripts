@@ -395,7 +395,7 @@ end
 
 -----/UI-----
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "IYStyle"
+ScreenGui.Name = "PulseAdmin"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 
