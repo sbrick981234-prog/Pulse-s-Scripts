@@ -3,7 +3,6 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-
 -----/Variables/-----
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -129,30 +128,28 @@ for _, Data in ipairs(CardinalData) do
 	Label.TextSize = 16
 	Label.Font = Enum.Font.GothamBold
 	Label.Parent = Dial
-
 	CardinalLabels[Label] = Data.Angle
 end
 
 -----/Tick Marks/-----
 for Index = 0, 11 do
 	local Angle = Index * 30
-
 	local Tick = Instance.new("Frame")
 	Tick.Name = "Tick"
 	Tick.AnchorPoint = Vector2.new(0.5, 0.5)
 	Tick.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 	Tick.BorderSizePixel = 0
-
+	
 	if Angle % 90 == 0 then
 		Tick.Size = UDim2.fromOffset(2, 10)
 	else
 		Tick.Size = UDim2.fromOffset(2, 6)
 	end
-
+	
 	local Radians = math.rad(Angle)
 	local X = math.sin(Radians) * 82
 	local Y = -math.cos(Radians) * 82
-
+	
 	Tick.Position = UDim2.new(0.5, X, 0.5, Y)
 	Tick.Rotation = Angle
 	Tick.Parent = Dial
@@ -216,38 +213,33 @@ local DirectionNames = {
 local function GetDirectionName(Heading)
 	local Index = math.floor((Heading / 45) + 0.5) % 8 + 1
 	return DirectionNames[Index]
-
 end
 
 local function UpdateHeading()
 	local LookVector = Camera.CFrame.LookVector
 	local Heading = math.deg(math.atan2(LookVector.X, -LookVector.Z))
-
+	
 	if Heading < 0 then
 		Heading += 360
 	end
-
+	
 	Dial.Rotation = -Heading
-
+	
 	for Label, Angle in pairs(CardinalLabels) do
-
 		local Radians = math.rad(Angle)
 		local X = math.sin(Radians) * Radius
 		local Y = -math.cos(Radians) * Radius
-
+		
 		Label.Position = UDim2.new(0.5, X - 12, 0.5, Y - 12)
 		Label.Rotation = Heading
-
 	end
-
+	
 	HeadingLabel.Text = string.format("%03d°", math.floor(Heading + 0.5) % 360)
 	DirectionLabel.Text = GetDirectionName(Heading)
-
 end
 
 -----/Open Animation/-----
 local OpenSize = UDim2.fromOffset(260, 300)
-
 local function Open()
 	Main.Visible = true
 	Main.Size = UDim2.fromOffset(0, 0)
