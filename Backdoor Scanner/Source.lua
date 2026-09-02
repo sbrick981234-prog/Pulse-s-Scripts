@@ -28,6 +28,8 @@ MainStroke.Transparency = 0.8
 MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 MainStroke.Parent = Main
 
+local MainShadow = Instance.new("UIShadow")
+
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Size = UDim2.new(1, 0, 0, 35)
