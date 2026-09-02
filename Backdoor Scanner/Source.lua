@@ -69,7 +69,7 @@ local HoverSize = UDim2.fromOffset(195, 58)
 local PressSize = UDim2.fromOffset(184, 52)
 
 local TweenInfo = TweenInfo.new(
-	0.12,
+	0.025,
 	Enum.EasingStyle.Quad,
 	Enum.EasingDirection.Out
 )
