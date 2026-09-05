@@ -85,7 +85,7 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PulseScanner"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 999999999
-ScreenGui.Parent = CoreGui:FindFirstChild("RobloxGui")
+ScreenGui.Parent = CoreGui
 
 local Main = Instance.new("Frame")
 Main.Size = UDim2.fromOffset(240, 140)
