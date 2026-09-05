@@ -610,7 +610,6 @@ function UILib:CreateTab(Name)
 	end
 
 	-----/Dropdown/-----
-
 	function TabMethods:CreateDropdown(Config)
 		Config = Config or {}
 
