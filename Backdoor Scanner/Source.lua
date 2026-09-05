@@ -3,8 +3,6 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
-local CoreGui = game:GetService("CoreGui")
-
 -----/Variables/-----
 local Player = Players.LocalPlayer
 
@@ -85,7 +83,7 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "PulseScanner"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 999999999
-ScreenGui.Parent = CoreGui
+ScreenGui.Parent = LocalPlayer:FindFirstChild("PlayerGui")
 
 local Main = Instance.new("Frame")
 Main.Size = UDim2.fromOffset(240, 140)
