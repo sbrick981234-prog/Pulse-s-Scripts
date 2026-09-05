@@ -1,4 +1,4 @@
-local UILib = require(game.ReplicatedStorage.LarpUI)
+local UILib = loadstring(game:HttpGet("https://raw.githubusercontent.com/sbrick981234-prog/Pulse-s-Scripts/refs/heads/main/Larp%20UI/Source.lua"))()
 
 local Window = UILib:CreateWindow("Test")
 local Tab = Window:CreateTab("Main")
