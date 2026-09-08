@@ -31,16 +31,6 @@ Tab:CreateSlider({
 	end
 })
 
-Tab:CreateDropdown({
-	Text = "ABC",
-	Options = {"A", "B", "C"},
-	Default = "A",
-	
-	Callback = function(Option)
-		print(Option)
-	end
-})
-
 Tab:CreateTextbox({
 	Text = "",
 	Placeholder = "Enter text here",
