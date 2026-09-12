@@ -53,3 +53,30 @@ VisualTab:CreateToggle({
 })
 
 VisualTab:CreateLabel("Settings")
+
+-----/Script Hub/-----
+local VisualTab = Window:CreateTab("Script Hub")
+
+Tab:CreateButton({
+	Text = "Infinity Yield",
+	
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+	end
+})
+
+Tab:CreateButton({
+	Text = "DEX",
+	
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/Diffone7/r/refs/heads/main/tsb/dex"))()
+	end
+})
+
+Tab:CreateButton({
+	Text = "Cobalt",
+	
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/sbrick981234-prog/Pulse-s-Scripts/refs/heads/main/Cobalt/Source.lua"))()
+	end
+})
