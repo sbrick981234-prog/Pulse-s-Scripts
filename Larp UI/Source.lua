@@ -1,4 +1,3 @@
------/Loadstrings/-----
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/sbrick981234-prog/Pulse-s-Scripts/refs/heads/main/Library/Source.lua"))()
 
 -----/Services/-----
@@ -568,224 +567,305 @@ function UILib:CreateTab(Name)
 			end,
 		}
 	end
+	
+	-----/ColorPicker/-----
+	function TabMethods:CreateColorPicker(Config)
+		Config = Config or {}
 
-	```lua
------/ColorPicker/-----
-function TabMethods:CreateColorPicker(Config)
-	Config = Config or {}
+		local Value = typeof(Config.Default) == "Color3" and Config.Default or Color3.fromRGB(255,255,255)
+		local Opened = false
 
-	local Value = typeof(Config.Default) == "Color3" and Config.Default or Color3.fromRGB(255,255,255)
+		local Holder = Instance.new("TextButton")
+		Holder.Name = "ColorPicker"
+		Holder.Size = UDim2.new(1,0,0,34)
+		Holder.BackgroundColor3 = Theme.BackgroundLight
+		Holder.AutoButtonColor = false
+		Holder.Text = ""
+		Holder.Parent = Page
 
-	local Holder = Instance.new("TextButton")
-	Holder.Name = "ColorPicker"
-	Holder.Size = UDim2.new(1,0,0,34)
-	Holder.BackgroundColor3 = Theme.BackgroundLight
-	Holder.AutoButtonColor = false
-	Holder.Text = ""
-	Holder.Parent = Page
+		ApplyCorner(Holder,Theme.CornerRadiusSmall)
+		ApplyStroke(Holder,1)
 
-	ApplyCorner(Holder,Theme.CornerRadiusSmall)
-	ApplyStroke(Holder,1)
+		local Label = Instance.new("TextLabel")
+		Label.Name = "Label"
+		Label.Size = UDim2.new(1,-48,1,0)
+		Label.Position = UDim2.new(0,6,0,0)
+		Label.BackgroundTransparency = 1
+		Label.Text = tostring(Config.Text or "Color Picker")
+		Label.TextXAlignment = Enum.TextXAlignment.Left
+		Label.Parent = Holder
 
-	local Label = Instance.new("TextLabel")
-	Label.Name = "Label"
-	Label.Size = UDim2.new(1,-48,1,0)
-	Label.Position = UDim2.new(0,6,0,0)
-	Label.BackgroundTransparency = 1
-	Label.Text = tostring(Config.Text or "Color")
-	Label.TextXAlignment = Enum.TextXAlignment.Left
-	Label.Parent = Holder
+		ApplyTextStyle(Label)
 
-	ApplyTextStyle(Label)
-
-	local Preview = Instance.new("Frame")
-	Preview.Name = "Preview"
-	Preview.Size = UDim2.new(0,24,0,24)
-	Preview.Position = UDim2.new(1,-30,0.5,-12)
-	Preview.BackgroundColor3 = Value
-	Preview.BorderSizePixel = 0
-	Preview.Parent = Holder
-
-	ApplyCorner(Preview,UDim.new(0,5))
-	ApplyStroke(Preview,1)
-
-	local PickerGui = Instance.new("ScreenGui")
-	PickerGui.Name = "ColorPicker"
-	PickerGui.ResetOnSpawn = false
-	PickerGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
-	PickerGui.Enabled = false
-	PickerGui.Parent = PlayerGui
-
-	local Picker = Instance.new("CanvasGroup")
-	Picker.Name = "Window"
-	Picker.Size = UDim2.new(0,260,0,220)
-	Picker.AnchorPoint = Vector2.new(0.5,0.5)
-	Picker.Position = UDim2.new(0.5,0,0.5,0)
-	Picker.BackgroundColor3 = Theme.Background
-	Picker.BorderSizePixel = 0
-	Picker.GroupTransparency = 1
-	Picker.Parent = PickerGui
-
-	ApplyCorner(Picker)
-	ApplyStroke(Picker,1)
-
-	local PickerTitle = Instance.new("TextLabel")
-	PickerTitle.Name = "Title"
-	PickerTitle.Size = UDim2.new(1,-40,0,32)
-	PickerTitle.Position = UDim2.new(0,10,0,0)
-	PickerTitle.BackgroundTransparency = 1
-	PickerTitle.Text = tostring(Config.Text or "Color Picker")
-	PickerTitle.TextXAlignment = Enum.TextXAlignment.Left
-	PickerTitle.Parent = Picker
-
-	ApplyTextStyle(PickerTitle)
-	PickerTitle.TextSize = 15
-
-	local Close = Instance.new("TextButton")
-	Close.Name = "Close"
-	Close.Size = UDim2.new(0,28,0,28)
-	Close.Position = UDim2.new(1,-32,0,2)
-	Close.BackgroundTransparency = 1
-	Close.Text = "×"
-	Close.Parent = Picker
-
-	ApplyTextStyle(Close)
-	Close.TextSize = 20
-
-	local ColorBox = Instance.new("Frame")
-	ColorBox.Name = "ColorBox"
-	ColorBox.Size = UDim2.new(1,-20,0,120)
-	ColorBox.Position = UDim2.new(0,10,0,40)
-	ColorBox.BackgroundColor3 = Value
-	ColorBox.BorderSizePixel = 0
-	ColorBox.Parent = Picker
-
-	ApplyCorner(ColorBox,Theme.CornerRadiusSmall)
-	ApplyStroke(ColorBox,1)
-
-	local Input = Instance.new("TextBox")
-	Input.Name = "RGB"
-	Input.Size = UDim2.new(1,-20,0,32)
-	Input.Position = UDim2.new(0,10,1,-42)
-	Input.BackgroundColor3 = Theme.BackgroundLight
-	Input.BorderSizePixel = 0
-	Input.ClearTextOnFocus = false
-	Input.PlaceholderText = "255,255,255"
-	Input.PlaceholderColor3 = Theme.Placeholder
-	Input.Text = string.format("%d,%d,%d",Value.R*255,Value.G*255,Value.B*255)
-	Input.TextXAlignment = Enum.TextXAlignment.Left
-	Input.Parent = Picker
-
-	ApplyCorner(Input,Theme.CornerRadiusSmall)
-	ApplyStroke(Input,1)
-	ApplyTextStyle(Input)
-
-	local function UpdateColor(NewColor,FireCallback)
-		if typeof(NewColor) ~= "Color3" then
-			return
-		end
-
-		Value = NewColor
+		local Preview = Instance.new("Frame")
+		Preview.Name = "Preview"
+		Preview.Size = UDim2.new(0,22,0,22)
+		Preview.Position = UDim2.new(1,-28,0.5,-11)
 		Preview.BackgroundColor3 = Value
-		ColorBox.BackgroundColor3 = Value
-		Input.Text = string.format("%d,%d,%d",Value.R*255,Value.G*255,Value.B*255)
+		Preview.BorderSizePixel = 0
+		Preview.Parent = Holder
 
-		if FireCallback ~= false and typeof(Config.Callback) == "function" then
-			task.spawn(Config.Callback,Value)
+		ApplyCorner(Preview,UDim.new(0,5))
+		ApplyStroke(Preview,1)
+
+		local PickerGui = Instance.new("ScreenGui")
+		PickerGui.Name = "ColorPicker"
+		PickerGui.ResetOnSpawn = false
+		PickerGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+		PickerGui.Enabled = false
+		PickerGui.Parent = PlayerGui
+
+		local Window = Instance.new("CanvasGroup")
+		Window.Name = "Window"
+		Window.Size = UDim2.new(0,250,0,210)
+		Window.BackgroundColor3 = Theme.Background
+		Window.BorderSizePixel = 0
+		Window.GroupTransparency = 1
+		Window.Parent = PickerGui
+
+		ApplyCorner(Window,Theme.CornerRadius)
+		ApplyStroke(Window,1)
+
+		local Title = Instance.new("TextLabel")
+		Title.Name = "Title"
+		Title.Size = UDim2.new(1,-40,0,32)
+		Title.Position = UDim2.new(0,10,0,0)
+		Title.BackgroundTransparency = 1
+		Title.Text = tostring(Config.Text or "Color Picker")
+		Title.TextXAlignment = Enum.TextXAlignment.Left
+		Title.Parent = Window
+
+		ApplyTextStyle(Title)
+		Title.TextSize = 15
+
+		local Close = Instance.new("TextButton")
+		Close.Name = "Close"
+		Close.Size = UDim2.new(0,28,0,28)
+		Close.Position = UDim2.new(1,-32,0,2)
+		Close.BackgroundTransparency = 1
+		Close.Text = "×"
+		Close.Parent = Window
+
+		ApplyTextStyle(Close)
+		Close.TextSize = 20
+
+		local Saturation = Instance.new("ImageButton")
+		Saturation.Name = "Saturation"
+		Saturation.Size = UDim2.new(1,-50,0,120)
+		Saturation.Position = UDim2.new(0,10,0,40)
+		Saturation.AutoButtonColor = false
+		Saturation.BorderSizePixel = 0
+		Saturation.BackgroundColor3 = Color3.fromRGB(255,0,0)
+		Saturation.Image = "rbxassetid://4155801252"
+		Saturation.Parent = Window
+
+		ApplyCorner(Saturation,Theme.CornerRadiusSmall)
+		ApplyStroke(Saturation,1)
+
+		local Hue = Instance.new("ImageButton")
+		Hue.Name = "Hue"
+		Hue.Size = UDim2.new(0,18,0,120)
+		Hue.Position = UDim2.new(1,-28,0,40)
+		Hue.AutoButtonColor = false
+		Hue.BorderSizePixel = 0
+		Hue.Image = "rbxassetid://3641079629"
+		Hue.Parent = Window
+
+		ApplyCorner(Hue,Theme.CornerRadiusSmall)
+		ApplyStroke(Hue,1)
+
+		local ColorDisplay = Instance.new("Frame")
+		ColorDisplay.Name = "Color"
+		ColorDisplay.Size = UDim2.new(1,-20,0,28)
+		ColorDisplay.Position = UDim2.new(0,10,1,-38)
+		ColorDisplay.BackgroundColor3 = Value
+		ColorDisplay.BorderSizePixel = 0
+		ColorDisplay.Parent = Window
+
+		ApplyCorner(ColorDisplay,Theme.CornerRadiusSmall)
+		ApplyStroke(ColorDisplay,1)
+
+		local SaturationMarker = Instance.new("Frame")
+		SaturationMarker.Name = "Marker"
+		SaturationMarker.Size = UDim2.new(0,8,0,8)
+		SaturationMarker.AnchorPoint = Vector2.new(0.5,0.5)
+		SaturationMarker.BackgroundColor3 = Color3.fromRGB(255,255,255)
+		SaturationMarker.BorderSizePixel = 0
+		SaturationMarker.ZIndex = 5
+		SaturationMarker.Parent = Saturation
+
+		ApplyCorner(SaturationMarker,UDim.new(1,0))
+		ApplyStroke(SaturationMarker,1)
+
+		local HueMarker = Instance.new("Frame")
+		HueMarker.Name = "Marker"
+		HueMarker.Size = UDim2.new(1,0,0,3)
+		HueMarker.BackgroundColor3 = Color3.fromRGB(255,255,255)
+		HueMarker.BorderSizePixel = 0
+		HueMarker.ZIndex = 5
+		HueMarker.Parent = Hue
+
+		local H,S,V = Value:ToHSV()
+
+		local function UpdateColor()
+			Value = Color3.fromHSV(H,S,V)
+
+			Saturation.BackgroundColor3 = Color3.fromHSV(H,1,1)
+			SaturationMarker.Position = UDim2.new(S,0,1-V,0)
+			HueMarker.Position = UDim2.new(0,0,H,0)
+
+			Preview.BackgroundColor3 = Value
+			ColorDisplay.BackgroundColor3 = Value
+
+			if typeof(Config.Callback) == "function" then
+				task.spawn(Config.Callback,Value)
+			end
 		end
-	end
 
-	local function ParseRGB(Text)
-		local R,G,B = string.match(Text,"(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
+		local function UpdateSaturation(Input)
+			local X = math.clamp((Input.Position.X-Saturation.AbsolutePosition.X)/Saturation.AbsoluteSize.X,0,1)
+			local Y = math.clamp((Input.Position.Y-Saturation.AbsolutePosition.Y)/Saturation.AbsoluteSize.Y,0,1)
 
-		R = tonumber(R)
-		G = tonumber(G)
-		B = tonumber(B)
+			S = X
+			V = 1-Y
 
-		if not R or not G or not B then
-			return
+			UpdateColor()
 		end
 
-		R = math.clamp(R,0,255)
-		G = math.clamp(G,0,255)
-		B = math.clamp(B,0,255)
+		local function UpdateHue(Input)
+			local Y = math.clamp((Input.Position.Y-Hue.AbsolutePosition.Y)/Hue.AbsoluteSize.Y,0,1)
 
-		UpdateColor(Color3.fromRGB(R,G,B))
-	end
+			H = Y
 
-	Input.FocusLost:Connect(function()
-		ParseRGB(Input.Text)
-	end)
+			UpdateColor()
+		end
 
-	local Open = false
+		local DraggingSaturation = false
+		local DraggingHue = false
 
-	local function SetVisible(State)
-		Open = State == true
+		Saturation.InputBegan:Connect(function(Input)
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+				DraggingSaturation = true
+				
+				UpdateSaturation(Input)
+			end
+		end)
 
-		if Open then
-			PickerGui.Enabled = true
-			Picker.Size = UDim2.new(0,240,0,200)
-			Picker.GroupTransparency = 1
+		Hue.InputBegan:Connect(function(Input)
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+				DraggingHue = true
+				
+				UpdateHue(Input)
+			end
+		end)
 
-			TweenService:Create(Picker,Theme.TweenInfo,{
-				Size = UDim2.new(0,260,0,220),
-				GroupTransparency = 0
-			}):Play()
-		else
-			local Tween = TweenService:Create(Picker,Theme.TweenInfo,{
-				Size = UDim2.new(0,240,0,200),
-				GroupTransparency = 1
-			})
-
-			Tween:Play()
-
-			Tween.Completed:Once(function()
-				if not Open then
-					PickerGui.Enabled = false
+		UserInputService.InputChanged:Connect(function(Input)
+			if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
+				if DraggingSaturation then
+					UpdateSaturation(Input)
+				elseif DraggingHue then
+					UpdateHue(Input)
 				end
-			end)
+			end
+		end)
+
+		UserInputService.InputEnded:Connect(function(Input)
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+				DraggingSaturation = false
+				DraggingHue = false
+			end
+		end)
+
+		local function SetVisible(State)
+			Opened = State == true
+
+			if Opened then
+				local AbsolutePosition = Holder.AbsolutePosition
+				local AbsoluteSize = Holder.AbsoluteSize
+
+				Window.Position = UDim2.fromOffset(
+					AbsolutePosition.X+AbsoluteSize.X+8,
+					AbsolutePosition.Y
+				)
+
+				Window.Size = UDim2.new(0,235,0,195)
+				Window.GroupTransparency = 1
+				PickerGui.Enabled = true
+
+				TweenService:Create(Window,Theme.TweenInfo,{
+					Size = UDim2.new(0,250,0,210),
+					GroupTransparency = 0
+				}):Play()
+			else
+				local Tween = TweenService:Create(Window,Theme.TweenInfo,{
+					Size = UDim2.new(0,235,0,195),
+					GroupTransparency = 1
+				})
+
+				Tween:Play()
+
+				Tween.Completed:Once(function()
+					if not Opened then
+						PickerGui.Enabled = false
+					end
+				end)
+			end
 		end
-	end
 
-	Holder.MouseEnter:Connect(function()
-		TweenService:Create(Holder,Theme.TweenInfoFast,{
-			BackgroundColor3 = Color3.fromRGB(18,18,18)
-		}):Play()
-	end)
+		Holder.MouseEnter:Connect(function()
+			TweenService:Create(Holder,Theme.TweenInfoFast,{
+				BackgroundColor3 = Color3.fromRGB(18,18,18)
+			}):Play()
+		end)
 
-	Holder.MouseLeave:Connect(function()
-		TweenService:Create(Holder,Theme.TweenInfoFast,{
-			BackgroundColor3 = Theme.BackgroundLight
-		}):Play()
-	end)
+		Holder.MouseLeave:Connect(function()
+			TweenService:Create(Holder,Theme.TweenInfoFast,{
+				BackgroundColor3 = Theme.BackgroundLight
+			}):Play()
+		end)
 
-	Holder.MouseButton1Click:Connect(function()
-		SetVisible(not Open)
-	end)
+		Holder.MouseButton1Click:Connect(function()
+			SetVisible(not Opened)
+		end)
 
-	Close.MouseButton1Click:Connect(function()
-		SetVisible(false)
-	end)
-
-	return {
-		Object = Holder,
-		Set = function(_,NewColor)
-			UpdateColor(NewColor)
-		end,
-		Get = function()
-			return Value
-		end,
-		Open = function()
-			SetVisible(true)
-		end,
-		Close = function()
+		Close.MouseButton1Click:Connect(function()
 			SetVisible(false)
-		end,
-	}
-end
-```
+		end)
 
+		UpdateColor()
 
+		return {
+			Object = Holder,
+
+			Set = function(_,NewColor)
+				if typeof(NewColor) ~= "Color3" then
+					return
+				end
+
+				Value = NewColor
+				H,S,V = Value:ToHSV()
+				UpdateColor()
+			end,
+
+			Get = function()
+				return Value
+			end,
+
+			Open = function()
+				SetVisible(true)
+			end,
+
+			Close = function()
+				SetVisible(false)
+			end,
+
+			Destroy = function()
+				PickerGui:Destroy()
+				Holder:Destroy()
+			end,
+		}
+	end
+	
 	-----/Textbox/-----
 	function TabMethods:CreateTextbox(Config)
 		Config = Config or {}
