@@ -80,10 +80,10 @@ function Library:Cells(Frame)
 		local FrameWidth = Frame.AbsoluteSize.X
 		local FrameHeight = Frame.AbsoluteSize.Y
 
-		for X = 0,FrameWidth + GridSize,GridSize do
+		for X = 0, FrameWidth + GridSize,GridSize do
 			local Line = Instance.new("Frame")
 			Line.Name = "Vertical"
-			Line.ZIndex = 0
+			Line.ZIndex = Frame.ZIndex
 			Line.BorderSizePixel = 0
 			Line.BackgroundColor3 = LineColor
 			Line.BackgroundTransparency = LineTransparency
@@ -95,7 +95,7 @@ function Library:Cells(Frame)
 		for Y = -GridSize,FrameHeight + GridSize,GridSize do
 			local Line = Instance.new("Frame")
 			Line.Name = "Horizontal"
-			Line.ZIndex = 0
+			Line.ZIndex = Frame.ZIndex
 			Line.BorderSizePixel = 0
 			Line.BackgroundColor3 = LineColor
 			Line.BackgroundTransparency = LineTransparency
