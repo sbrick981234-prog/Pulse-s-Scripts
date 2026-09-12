@@ -574,6 +574,7 @@ function UILib:CreateTab(Name)
 
 		local Value = typeof(Config.Default) == "Color3" and Config.Default or Color3.fromRGB(255, 255, 255)
 		local Opened = false
+		local Updating = false
 
 		local Holder = Instance.new("TextButton")
 		Holder.Name = "ColorPicker"
@@ -617,7 +618,7 @@ function UILib:CreateTab(Name)
 
 		local Window = Instance.new("CanvasGroup")
 		Window.Name = "Window"
-		Window.Size = UDim2.new(0, 250, 0, 175)
+		Window.Size = UDim2.new(0, 250, 0, 195)
 		Window.BackgroundColor3 = Theme.Background
 		Window.BorderSizePixel = 0
 		Window.GroupTransparency = 1
@@ -649,6 +650,7 @@ function UILib:CreateTab(Name)
 		ApplyTextStyle(Close)
 		Close.TextSize = 20
 
+		-----/RGB/-----
 		local RGBContainer = Instance.new("Frame")
 		RGBContainer.Name = "RGB"
 		RGBContainer.Size = UDim2.new(1, -20, 0, 108)
@@ -663,7 +665,7 @@ function UILib:CreateTab(Name)
 		RGBLayout.Padding = UDim.new(0, 6)
 		RGBLayout.Parent = RGBContainer
 
-		local function CreateRGBBox(Name, DisplayName, DefaultValue)
+		local function CreateRGBBox(Name : string, DisplayName : string, DefaultValue : number)
 			local Container = Instance.new("Frame")
 			Container.Name = Name
 			Container.Size = UDim2.new(1, 0, 0, 32)
@@ -698,26 +700,29 @@ function UILib:CreateTab(Name)
 			ApplyTextStyle(Box)
 
 			Box:GetPropertyChangedSignal("Text"):Connect(function()
-				local TextValue = Box.Text:gsub("%D", "")
+				local NewText = Box.Text:gsub("%D", "")
 
-				if TextValue ~= Box.Text then
-					Box.Text = TextValue
+				if NewText ~= Box.Text then
+					Box.Text = NewText
 				end
 			end)
 
 			return Box
 		end
 
-		local R, G, B = Value.R * 255, Value.G * 255, Value.B * 255
+		local Red = math.round(Value.R * 255)
+		local Green = math.round(Value.G * 255)
+		local Blue = math.round(Value.B * 255)
 
-		local RBox = CreateRGBBox("Red", "R", math.round(R))
-		local GBox = CreateRGBBox("Green", "G", math.round(G))
-		local BBox = CreateRGBBox("Blue", "B", math.round(B))
+		local RBox = CreateRGBBox("Red", "R", Red)
+		local GBox = CreateRGBBox("Green", "G", Green)
+		local BBox = CreateRGBBox("Blue", "B", Blue)
 
+		-----/Color/-----
 		local ColorDisplay = Instance.new("Frame")
 		ColorDisplay.Name = "Color"
 		ColorDisplay.Size = UDim2.new(1, -20, 0, 28)
-		ColorDisplay.Position = UDim2.new(0, 10, 1, -38)
+		ColorDisplay.Position = UDim2.new(0, 10, 0, 157)
 		ColorDisplay.BackgroundColor3 = Value
 		ColorDisplay.BorderSizePixel = 0
 		ColorDisplay.Parent = Window
@@ -725,14 +730,12 @@ function UILib:CreateTab(Name)
 		ApplyCorner(ColorDisplay, Theme.CornerRadiusSmall)
 		ApplyStroke(ColorDisplay, 1)
 
-		local Updating = false
-
 		local function GetRGB()
-			local Red = math.clamp(tonumber(RBox.Text) or 0, 0, 255)
-			local Green = math.clamp(tonumber(GBox.Text) or 0, 0, 255)
-			local Blue = math.clamp(tonumber(BBox.Text) or 0, 0, 255)
+			local R = math.clamp(tonumber(RBox.Text) or 0, 0, 255)
+			local G = math.clamp(tonumber(GBox.Text) or 0, 0, 255)
+			local B = math.clamp(tonumber(BBox.Text) or 0, 0, 255)
 
-			return Red, Green, Blue
+			return R, G, B
 		end
 
 		local function UpdateColor()
@@ -742,13 +745,13 @@ function UILib:CreateTab(Name)
 
 			Updating = true
 
-			local Red, Green, Blue = GetRGB()
+			local R, G, B = GetRGB()
 
-			RBox.Text = tostring(math.round(Red))
-			GBox.Text = tostring(math.round(Green))
-			BBox.Text = tostring(math.round(Blue))
+			RBox.Text = tostring(math.round(R))
+			GBox.Text = tostring(math.round(G))
+			BBox.Text = tostring(math.round(B))
 
-			Value = Color3.fromRGB(Red, Green, Blue)
+			Value = Color3.fromRGB(R, G, B)
 
 			Preview.BackgroundColor3 = Value
 			ColorDisplay.BackgroundColor3 = Value
@@ -772,7 +775,8 @@ function UILib:CreateTab(Name)
 			UpdateColor()
 		end)
 
-		local function SetVisible(State)
+		-----/Visibility/-----
+		local function SetVisible(State : boolean)
 			Opened = State == true
 
 			if Opened then
@@ -784,17 +788,17 @@ function UILib:CreateTab(Name)
 					AbsolutePosition.Y
 				)
 
-				Window.Size = UDim2.new(0, 235, 0, 160)
+				Window.Size = UDim2.new(0, 235, 0, 180)
 				Window.GroupTransparency = 1
 				PickerGui.Enabled = true
 
 				TweenService:Create(Window, Theme.TweenInfo, {
-					Size = UDim2.new(0, 250, 0, 175),
+					Size = UDim2.new(0, 250, 0, 195),
 					GroupTransparency = 0
 				}):Play()
 			else
 				local Tween = TweenService:Create(Window, Theme.TweenInfo, {
-					Size = UDim2.new(0, 235, 0, 160),
+					Size = UDim2.new(0, 235, 0, 180),
 					GroupTransparency = 1
 				})
 
@@ -808,6 +812,7 @@ function UILib:CreateTab(Name)
 			end
 		end
 
+		-----/Events/-----
 		Holder.MouseEnter:Connect(function()
 			TweenService:Create(Holder, Theme.TweenInfoFast, {
 				BackgroundColor3 = Color3.fromRGB(18, 18, 18)
@@ -828,25 +833,22 @@ function UILib:CreateTab(Name)
 			SetVisible(false)
 		end)
 
+		-----/Init/-----
 		UpdateColor()
 
 		return {
 			Object = Holder,
 
-			Set = function(_, NewColor)
+			Set = function(_, NewColor : Color3)
 				if typeof(NewColor) ~= "Color3" then
 					return
 				end
 
 				Value = NewColor
 
-				local Red = math.round(Value.R * 255)
-				local Green = math.round(Value.G * 255)
-				local Blue = math.round(Value.B * 255)
-
-				RBox.Text = tostring(Red)
-				GBox.Text = tostring(Green)
-				BBox.Text = tostring(Blue)
+				RBox.Text = tostring(math.round(Value.R * 255))
+				GBox.Text = tostring(math.round(Value.G * 255))
+				BBox.Text = tostring(math.round(Value.B * 255))
 
 				UpdateColor()
 			end,
