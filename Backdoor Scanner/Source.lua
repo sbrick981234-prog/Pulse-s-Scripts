@@ -1,3 +1,6 @@
+-----/Loadstrings/-----
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/sbrick981234-prog/Pulse-s-Scripts/refs/heads/main/Library/Source.lua"))()
+
 -----/Services/-----
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -5,78 +8,6 @@ local UserInputService = game:GetService("UserInputService")
 
 -----/Variables/-----
 local Player = Players.LocalPlayer
-
------/Function/-----
-local function MakeDraggable(dragObject: GuiObject, tweenInfo: TweenInfo?)
-	local dragToggle = false
-	local dragInput: InputObject?
-	local dragStart: Vector3?
-	local dragPosition: UDim2
-
-	local dragTweenInfo = tweenInfo or TweenInfo.new(0.1)
-
-	local inputBegan = dragObject.InputBegan:Connect(function(input: InputObject)
-		if (
-			input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch
-		) and not UserInputService:GetFocusedTextBox() then
-
-			dragToggle = true
-			dragStart = input.Position
-			dragPosition = dragObject.Position
-
-			local stateConnection
-			stateConnection = input:GetPropertyChangedSignal("UserInputState"):Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragToggle = false
-					stateConnection:Disconnect()
-				end
-			end)
-		end
-	end)
-
-	local inputChanged = dragObject.InputChanged:Connect(function(input: InputObject)
-		if (
-			input.UserInputType == Enum.UserInputType.MouseMovement
-			or input.UserInputType == Enum.UserInputType.Touch
-		) then
-			dragInput = input
-		end
-	end)
-
-	local userInputChanged = UserInputService.InputChanged:Connect(function(input: InputObject)
-		if input == dragInput and dragToggle and dragStart then
-			local delta = input.Position - dragStart
-
-			local position = UDim2.new(
-				dragPosition.X.Scale,
-				dragPosition.X.Offset + delta.X,
-				dragPosition.Y.Scale,
-				dragPosition.Y.Offset + delta.Y
-			)
-
-			TweenService:Create(
-				dragObject,
-				dragTweenInfo,
-				{Position = position}
-			):Play()
-		end
-	end)
-
-	dragObject.Destroying:Connect(function()
-		inputBegan:Disconnect()
-		inputChanged:Disconnect()
-		userInputChanged:Disconnect()
-	end)
-
-	return {
-		Disconnect = function()
-			inputBegan:Disconnect()
-			inputChanged:Disconnect()
-			userInputChanged:Disconnect()
-		end
-	}
-end
 
 -----/Main/-----
 local ScreenGui = Instance.new("ScreenGui")
@@ -93,7 +24,9 @@ Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 Main.Parent = ScreenGui
 
-MakeDraggable(Main)
+Library:Drag(Main)
+Library:Cells(Main)
+Library:Stars(Main)
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
