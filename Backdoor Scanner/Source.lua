@@ -17,7 +17,7 @@ ScreenGui.DisplayOrder = 999999999
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = LocalPlayer:FindFirstChild("PlayerGui")
 
-local Main = Instance.new("Frame")
+local Main = Instance.new("CanvasGroup")
 Main.Size = UDim2.fromOffset(240, 140)
 Main.Position = UDim2.fromScale(0.5, 0.5)
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
