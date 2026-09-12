@@ -3,11 +3,9 @@ local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local GuiService = game:GetService("GuiService")
 
 -----/Variables/-----
 local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
 local Skiddify = script.Parent
 
 local MainFrame = Skiddify:WaitForChild("MainFrame")
@@ -15,6 +13,7 @@ local MusicList = MainFrame:WaitForChild("MusicList")
 
 local PlayerFrame = MainFrame:FindFirstChild("PlayerFrame")
 local Settings = MainFrame:FindFirstChild("Settings")
+local MusicIcon = MainFrame:FindFirstChild("MusicIcon", true)
 
 local CurrentSound = nil
 local CurrentIndex = 0
@@ -27,19 +26,19 @@ local DefaultVolume = 1
 local DefaultSpeed = 1
 local DefaultPitch = 1
 
+local IconID = "103855092595603"
+
 local Tracks = {}
 
-local NotificationTime = 2
-
 -----/Assets/-----
-local PlaySound = Instance.new("Sound")
-PlaySound.Name = "SkiddifySound"
-PlaySound.Volume = 1
-PlaySound.PlaybackSpeed = 1
-PlaySound.Looped = false
-PlaySound.Parent = SoundService
+local SkiddifySound = Instance.new("Sound")
+SkiddifySound.Name = "SkiddifySound"
+SkiddifySound.Volume = 1
+SkiddifySound.PlaybackSpeed = 1
+SkiddifySound.Looped = false
+SkiddifySound.Parent = SoundService
 
-CurrentSound = PlaySound
+CurrentSound = SkiddifySound
 
 -----/Modules/-----
 local function Create(ClassName, Properties, Parent)
@@ -94,7 +93,6 @@ local function CreateStroke(Object)
 	return Stroke
 end
 
------/Values/-----
 local function FindObject(Name)
 	return MainFrame:FindFirstChild(Name, true)
 end
@@ -109,44 +107,56 @@ local function FindTextButton(Name)
 	return nil
 end
 
-local function FindTextBox(Name)
-	local Object = FindObject(Name)
-
-	if Object and Object:IsA("TextBox") then
-		return Object
-	end
-
-	return nil
-end
-
 local function GetSoundId(Id)
 	Id = tostring(Id)
 
 	Id = Id:gsub("rbxassetid://", "")
 	Id = Id:gsub("rbxasset://", "")
+	Id = Id:gsub("%s+", "")
 
 	return Id
 end
 
------/UI/-----
-local ControlFrame = PlayerFrame
+-----/Icon/-----
+local function SetIconID(Id)
+	Id = tostring(Id)
 
-if not ControlFrame then
-	ControlFrame = Create("Frame", {
+	Id = Id:gsub("rbxassetid://", "")
+	Id = Id:gsub("rbxasset://", "")
+	Id = Id:gsub("%s+", "")
+
+	if Id == "" then
+		return false
+	end
+
+	IconID = Id
+
+	if MusicIcon and MusicIcon:IsA("ImageLabel") then
+		MusicIcon.Image = "rbxassetid://" .. IconID
+	end
+
+	return true
+end
+
+SetIconID(IconID)
+
+-----/PlayerFrame/-----
+if not PlayerFrame then
+	PlayerFrame = Create("Frame", {
 		Name = "PlayerFrame",
 		BackgroundTransparency = 1,
 		Size = UDim2.new(1, 0, 0, 50)
 	}, MainFrame)
 end
 
-local ButtonContainer = ControlFrame:FindFirstChild("Container")
+local ButtonContainer = PlayerFrame:FindFirstChild("Container")
 
 if not ButtonContainer then
 	ButtonContainer = Create("Frame", {
 		Name = "Container",
 		BackgroundTransparency = 1,
 		Size = UDim2.new(1, 0, 1, 0)
-	}, ControlFrame)
+	}, PlayerFrame)
 end
 
 local ButtonLayout = ButtonContainer:FindFirstChildOfClass("UIListLayout")
@@ -161,6 +171,7 @@ if not ButtonLayout then
 	}, ButtonContainer)
 end
 
+-----/Buttons/-----
 local function CreateButton(Name, Text, LayoutOrder)
 	local Existing = FindTextButton(Name)
 
@@ -202,111 +213,10 @@ end
 local PreviousButton = CreateButton("PreviousButton", "◀", 1)
 local PlayButton = CreateButton("PlayButton", "▶", 2)
 local NextButton = CreateButton("NextButton", "▶", 3)
-
 local AddButton = CreateButton("AddButton", "+", 4)
 local ImportButton = CreateButton("ImportButton", "↓", 5)
 local ExportButton = CreateButton("ExportButton", "↑", 6)
-
------/ImportExport/-----
-local ImportFrame = Create("Frame", {
-	Name = "ImportExport",
-	BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-	BorderSizePixel = 0,
-	Position = UDim2.new(0.5, -175, 0.5, -100),
-	Size = UDim2.new(0, 350, 0, 200),
-	Visible = false,
-	ZIndex = 100
-}, Skiddify)
-
-CreateCorner(ImportFrame, 10)
-CreateStroke(ImportFrame)
-
-local ImportTitle = Create("TextLabel", {
-	Name = "Title",
-	BackgroundTransparency = 1,
-	Position = UDim2.new(0, 15, 0, 10),
-	Size = UDim2.new(1, -30, 0, 25),
-	Font = Enum.Font.Code,
-	Text = "Import / Export",
-	TextColor3 = Color3.fromRGB(255, 255, 255),
-	TextSize = 16,
-	TextXAlignment = Enum.TextXAlignment.Left,
-	ZIndex = 101
-}, ImportFrame)
-
-local ImportBox = Create("TextBox", {
-	Name = "Input",
-	BackgroundColor3 = Color3.fromRGB(10, 10, 10),
-	BorderSizePixel = 0,
-	Position = UDim2.new(0, 15, 0, 45),
-	Size = UDim2.new(1, -30, 0, 70),
-	ClearTextOnFocus = false,
-	Font = Enum.Font.Code,
-	MultiLine = true,
-	PlaceholderText = "43294322432:Volume-1:Speed-1:Pitch-1",
-	Text = "",
-	TextColor3 = Color3.fromRGB(255, 255, 255),
-	TextSize = 13,
-	TextWrapped = true,
-	TextXAlignment = Enum.TextXAlignment.Left,
-	TextYAlignment = Enum.TextYAlignment.Top,
-	ZIndex = 101
-}, ImportFrame)
-
-CreateCorner(ImportBox, 8)
-CreateStroke(ImportBox)
-
-local ConfirmImport = Create("TextButton", {
-	Name = "ConfirmImport",
-	BackgroundColor3 = Color3.fromRGB(10, 10, 10),
-	BorderSizePixel = 0,
-	Position = UDim2.new(0, 15, 1, -45),
-	Size = UDim2.new(0.48, -18, 0, 30),
-	Font = Enum.Font.Code,
-	Text = "Import",
-	TextColor3 = Color3.fromRGB(255, 255, 255),
-	TextSize = 13,
-	ZIndex = 101
-}, ImportFrame)
-
-CreateCorner(ConfirmImport, 8)
-CreateStroke(ConfirmImport)
-
-local CopyExport = Create("TextButton", {
-	Name = "CopyExport",
-	BackgroundColor3 = Color3.fromRGB(10, 10, 10),
-	BorderSizePixel = 0,
-	Position = UDim2.new(0.52, 3, 1, -45),
-	Size = UDim2.new(0.48, -18, 0, 30),
-	Font = Enum.Font.Code,
-	Text = "Export",
-	TextColor3 = Color3.fromRGB(255, 255, 255),
-	TextSize = 13,
-	ZIndex = 101
-}, ImportFrame)
-
-CreateCorner(CopyExport, 8)
-CreateStroke(CopyExport)
-
-local function OpenImport()
-	ImportBox.Text = ""
-
-	ImportFrame.Visible = true
-
-	Tween(ImportFrame, 0.15, {
-		Size = UDim2.new(0, 350, 0, 200)
-	})
-end
-
-local function CloseImport()
-	Tween(ImportFrame, 0.12, {
-		Size = UDim2.new(0, 330, 0, 180)
-	})
-
-	task.delay(0.12, function()
-		ImportFrame.Visible = false
-	end)
-end
+local IconButton = CreateButton("IconButton", "Icon", 7)
 
 -----/Functions/-----
 local function StopSound()
@@ -315,8 +225,8 @@ local function StopSound()
 	end
 
 	CurrentSound:Stop()
-	IsPlaying = false
 
+	IsPlaying = false
 	PlayButton.Text = "▶"
 end
 
@@ -358,6 +268,7 @@ local function PlayTrack(Index)
 	CurrentIndex = Index
 
 	CurrentSound:Stop()
+
 	CurrentSound.SoundId = "rbxassetid://" .. GetSoundId(Track.Id)
 
 	ApplyTrackSettings(Track)
@@ -373,6 +284,10 @@ local function PlayTrack(Index)
 
 	IsPlaying = true
 	PlayButton.Text = "Ⅱ"
+
+	if MusicIcon and MusicIcon:IsA("ImageLabel") then
+		MusicIcon.Image = "rbxassetid://" .. IconID
+	end
 end
 
 local function PlayCurrent()
@@ -386,19 +301,23 @@ local function PlayCurrent()
 
 	if IsPlaying then
 		CurrentSound:Pause()
+
 		IsPlaying = false
 		PlayButton.Text = "▶"
-	else
-		if CurrentSound.TimePosition > 0 then
-			CurrentSound:Resume()
-		else
-			PlayTrack(CurrentIndex)
-			return
-		end
 
-		IsPlaying = true
-		PlayButton.Text = "Ⅱ"
+		return
 	end
+
+	if CurrentSound.TimePosition > 0 then
+		CurrentSound:Resume()
+	else
+		PlayTrack(CurrentIndex)
+
+		return
+	end
+
+	IsPlaying = true
+	PlayButton.Text = "Ⅱ"
 end
 
 local function NextTrack()
@@ -429,6 +348,7 @@ local function PreviousTrack()
 	PlayTrack(CurrentIndex)
 end
 
+-----/MusicList/-----
 local function CreateTrackItem(Track, Index)
 	local Existing = MusicList:FindFirstChild("Track_" .. Index)
 
@@ -508,21 +428,13 @@ local function CreateTrackItem(Track, Index)
 			CurrentIndex -= 1
 		end
 
-		for _, Child in ipairs(MusicList:GetChildren()) do
-			if Child:IsA("TextButton") and Child.Name:match("^Track_") then
-				Child:Destroy()
-			end
-		end
-
-		for TrackIndex, TrackData in ipairs(Tracks) do
-			CreateTrackItem(TrackData, TrackIndex)
-		end
+		RefreshList()
 	end)
 
 	return Item
 end
 
-local function RefreshList()
+function RefreshList()
 	for _, Child in ipairs(MusicList:GetChildren()) do
 		if Child:IsA("TextButton") and Child.Name:match("^Track_") then
 			Child:Destroy()
@@ -533,7 +445,12 @@ local function RefreshList()
 		CreateTrackItem(Track, Index)
 	end
 
-	MusicList.CanvasSize = UDim2.new(0, 0, 0, #Tracks * 47)
+	MusicList.CanvasSize = UDim2.new(
+		0,
+		0,
+		0,
+		#Tracks * 47
+	)
 end
 
 local function AddTrack(Id, Name, Volume, Speed, Pitch)
@@ -558,61 +475,7 @@ local function AddTrack(Id, Name, Volume, Speed, Pitch)
 	end
 end
 
-local function ExportTracks()
-	local Exported = {}
-
-	for _, Track in ipairs(Tracks) do
-		table.insert(
-			Exported,
-			string.format(
-				"%s:Volume-%s:Speed-%s:Pitch-%s",
-				Track.Id,
-				tostring(Track.Volume),
-				tostring(Track.Speed),
-				tostring(Track.Pitch)
-			)
-		)
-	end
-
-	return table.concat(Exported, ", ")
-end
-
-local function ImportTracks(Data)
-	if typeof(Data) ~= "string" then
-		return
-	end
-
-	Tracks = {}
-	CurrentIndex = 0
-
-	for Entry in Data:gmatch("[^,]+") do
-		Entry = Entry:gsub("^%s+", "")
-		Entry = Entry:gsub("%s+$", "")
-
-		local Id = Entry:match("^([^:]+)")
-		local Volume = Entry:match("Volume%-([^:]+)")
-		local Speed = Entry:match("Speed%-([^:]+)")
-		local Pitch = Entry:match("Pitch%-([^:]+)")
-
-		if Id then
-			AddTrack(
-				Id,
-				Id,
-				tonumber(Volume) or 1,
-				tonumber(Speed) or 1,
-				tonumber(Pitch) or 1
-			)
-		end
-	end
-
-	RefreshList()
-
-	if #Tracks > 0 then
-		CurrentIndex = 1
-	end
-end
-
------/Add/-----
+-----/AddWindow/-----
 local AddFrame = Create("Frame", {
 	Name = "AddMusic",
 	BackgroundColor3 = Color3.fromRGB(0, 0, 0),
@@ -626,18 +489,32 @@ local AddFrame = Create("Frame", {
 CreateCorner(AddFrame, 10)
 CreateStroke(AddFrame)
 
+local AddTitle = Create("TextLabel", {
+	Name = "Title",
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 15, 0, 5),
+	Size = UDim2.new(1, -30, 0, 25),
+	Font = Enum.Font.Code,
+	Text = "Add Music",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextSize = 15,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	ZIndex = 101
+}, AddFrame)
+
 local AddBox = Create("TextBox", {
 	Name = "SoundId",
 	BackgroundColor3 = Color3.fromRGB(10, 10, 10),
 	BorderSizePixel = 0,
-	Position = UDim2.new(0, 15, 0, 15),
+	Position = UDim2.new(0, 15, 0, 35),
 	Size = UDim2.new(1, -30, 0, 40),
 	ClearTextOnFocus = false,
 	Font = Enum.Font.Code,
 	PlaceholderText = "Sound ID",
 	Text = "",
 	TextColor3 = Color3.fromRGB(255, 255, 255),
-	TextSize = 14
+	TextSize = 14,
+	ZIndex = 101
 }, AddFrame)
 
 CreateCorner(AddBox, 8)
@@ -652,7 +529,8 @@ local ConfirmAdd = Create("TextButton", {
 	Font = Enum.Font.Code,
 	Text = "Add",
 	TextColor3 = Color3.fromRGB(255, 255, 255),
-	TextSize = 13
+	TextSize = 13,
+	ZIndex = 101
 }, AddFrame)
 
 CreateCorner(ConfirmAdd, 8)
@@ -668,7 +546,238 @@ local function CloseAdd()
 	AddBox:ReleaseFocus()
 end
 
------/Main/-----
+-----/IconSettings/-----
+local IconSettings = Create("Frame", {
+	Name = "IconSettings",
+	BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+	BorderSizePixel = 0,
+	Position = UDim2.new(0.5, -150, 0.5, -70),
+	Size = UDim2.new(0, 300, 0, 160),
+	Visible = false,
+	ZIndex = 100
+}, Skiddify)
+
+CreateCorner(IconSettings, 10)
+CreateStroke(IconSettings)
+
+local IconTitle = Create("TextLabel", {
+	Name = "Title",
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 15, 0, 8),
+	Size = UDim2.new(1, -30, 0, 25),
+	Font = Enum.Font.Code,
+	Text = "Icon ID",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextSize = 15,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	ZIndex = 101
+}, IconSettings)
+
+local IconBox = Create("TextBox", {
+	Name = "IconID",
+	BackgroundColor3 = Color3.fromRGB(10, 10, 10),
+	BorderSizePixel = 0,
+	Position = UDim2.new(0, 15, 0, 40),
+	Size = UDim2.new(1, -30, 0, 40),
+	ClearTextOnFocus = false,
+	Font = Enum.Font.Code,
+	PlaceholderText = "Icon ID",
+	Text = IconID,
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextSize = 13,
+	ZIndex = 101
+}, IconSettings)
+
+CreateCorner(IconBox, 8)
+CreateStroke(IconBox)
+
+local ApplyIcon = Create("TextButton", {
+	Name = "Apply",
+	BackgroundColor3 = Color3.fromRGB(10, 10, 10),
+	BorderSizePixel = 0,
+	Position = UDim2.new(0, 15, 1, -55),
+	Size = UDim2.new(1, -30, 0, 35),
+	Font = Enum.Font.Code,
+	Text = "Apply",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextSize = 13,
+	ZIndex = 101
+}, IconSettings)
+
+CreateCorner(ApplyIcon, 8)
+CreateStroke(ApplyIcon)
+
+-----/ImportExport/-----
+local ImportFrame = Create("Frame", {
+	Name = "ImportExport",
+	BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+	BorderSizePixel = 0,
+	Position = UDim2.new(0.5, -175, 0.5, -100),
+	Size = UDim2.new(0, 350, 0, 200),
+	Visible = false,
+	ZIndex = 100
+}, Skiddify)
+
+CreateCorner(ImportFrame, 10)
+CreateStroke(ImportFrame)
+
+local ImportTitle = Create("TextLabel", {
+	Name = "Title",
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 15, 0, 10),
+	Size = UDim2.new(1, -30, 0, 25),
+	Font = Enum.Font.Code,
+	Text = "Import / Export",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextSize = 16,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	ZIndex = 101
+}, ImportFrame)
+
+local ImportBox = Create("TextBox", {
+	Name = "Input",
+	BackgroundColor3 = Color3.fromRGB(10, 10, 10),
+	BorderSizePixel = 0,
+	Position = UDim2.new(0, 15, 0, 45),
+	Size = UDim2.new(1, -30, 0, 70),
+	ClearTextOnFocus = false,
+	Font = Enum.Font.Code,
+	MultiLine = true,
+	PlaceholderText = "IconID-123456|123456:Volume-1:Speed-1:Pitch-1",
+	Text = "",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextSize = 13,
+	TextWrapped = true,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	TextYAlignment = Enum.TextYAlignment.Top,
+	ZIndex = 101
+}, ImportFrame)
+
+CreateCorner(ImportBox, 8)
+CreateStroke(ImportBox)
+
+local ConfirmImport = Create("TextButton", {
+	Name = "ConfirmImport",
+	BackgroundColor3 = Color3.fromRGB(10, 10, 10),
+	BorderSizePixel = 0,
+	Position = UDim2.new(0, 15, 1, -45),
+	Size = UDim2.new(0.48, -18, 0, 30),
+	Font = Enum.Font.Code,
+	Text = "Import",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextSize = 13,
+	ZIndex = 101
+}, ImportFrame)
+
+CreateCorner(ConfirmImport, 8)
+CreateStroke(ConfirmImport)
+
+local CopyExport = Create("TextButton", {
+	Name = "CopyExport",
+	BackgroundColor3 = Color3.fromRGB(10, 10, 10),
+	BorderSizePixel = 0,
+	Position = UDim2.new(0.52, 3, 1, -45),
+	Size = UDim2.new(0.48, -18, 0, 30),
+	Font = Enum.Font.Code,
+	Text = "Copy",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextSize = 13,
+	ZIndex = 101
+}, ImportFrame)
+
+CreateCorner(CopyExport, 8)
+CreateStroke(CopyExport)
+
+-----/ImportExportFunctions/-----
+local function ExportTracks()
+	local Exported = {}
+
+	table.insert(
+		Exported,
+		"IconID-" .. tostring(IconID)
+	)
+
+	for _, Track in ipairs(Tracks) do
+		table.insert(
+			Exported,
+			string.format(
+				"%s:Volume-%s:Speed-%s:Pitch-%s",
+				Track.Id,
+				tostring(Track.Volume),
+				tostring(Track.Speed),
+				tostring(Track.Pitch)
+			)
+		)
+	end
+
+	return table.concat(Exported, "|")
+end
+
+local function ImportTracks(Data)
+	if typeof(Data) ~= "string" then
+		return
+	end
+
+	Tracks = {}
+	CurrentIndex = 0
+
+	local Parts = {}
+
+	for Part in Data:gmatch("[^|]+") do
+		table.insert(Parts, Part)
+	end
+
+	for _, Entry in ipairs(Parts) do
+		Entry = Entry:gsub("^%s+", "")
+		Entry = Entry:gsub("%s+$", "")
+
+		local ImportedIconID = Entry:match("^IconID%-([^|]+)$")
+
+		if ImportedIconID then
+			SetIconID(ImportedIconID)
+		else
+			local Id = Entry:match("^([^:]+)")
+			local Volume = Entry:match("Volume%-([^:]+)")
+			local Speed = Entry:match("Speed%-([^:]+)")
+			local Pitch = Entry:match("Pitch%-([^:]+)")
+
+			if Id then
+				AddTrack(
+					Id,
+					Id,
+					tonumber(Volume) or 1,
+					tonumber(Speed) or 1,
+					tonumber(Pitch) or 1
+				)
+			end
+		end
+	end
+
+	RefreshList()
+
+	if #Tracks > 0 then
+		CurrentIndex = 1
+	end
+end
+
+local function OpenImport(Data)
+	ImportFrame.Visible = true
+
+	if Data then
+		ImportBox.Text = Data
+	else
+		ImportBox.Text = ""
+	end
+
+	ImportBox:CaptureFocus()
+end
+
+local function CloseImport()
+	ImportBox:ReleaseFocus()
+	ImportFrame.Visible = false
+end
+
+-----/Events/-----
 PreviousButton.MouseButton1Click:Connect(function()
 	PreviousTrack()
 end)
@@ -693,7 +802,21 @@ ConfirmAdd.MouseButton1Click:Connect(function()
 	end
 
 	AddBox.Text = ""
+
 	CloseAdd()
+end)
+
+IconButton.MouseButton1Click:Connect(function()
+	IconBox.Text = IconID
+	IconSettings.Visible = true
+	IconBox:CaptureFocus()
+end)
+
+ApplyIcon.MouseButton1Click:Connect(function()
+	if SetIconID(IconBox.Text) then
+		IconBox.Text = IconID
+		IconSettings.Visible = false
+	end
 end)
 
 ImportButton.MouseButton1Click:Connect(function()
@@ -701,9 +824,7 @@ ImportButton.MouseButton1Click:Connect(function()
 end)
 
 ExportButton.MouseButton1Click:Connect(function()
-	OpenImport()
-
-	ImportBox.Text = ExportTracks()
+	OpenImport(ExportTracks())
 end)
 
 ConfirmImport.MouseButton1Click:Connect(function()
@@ -756,7 +877,9 @@ end)
 
 -----/Init/-----
 RefreshList()
+SetIconID(IconID)
 
 print("Skiddify | Loaded")
 print("Skiddify | Tracks : " .. tostring(#Tracks))
+print("Skiddify | IconID : " .. tostring(IconID))
 print("Skiddify | Import / Export : Ready")
