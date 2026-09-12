@@ -157,7 +157,7 @@ function Library:Stars(Frame)
 		Star.BackgroundColor3 = Color3.fromRGB(255,255,255)
 		Star.BackgroundTransparency = 1
 		Star.BorderSizePixel = 0
-		Star.ZIndex = 0
+		Star.ZIndex = Frame.ZIndex
 		Star.Parent = StarFolder
 
 		Debris:AddItem(Star,StarLifeTime)
