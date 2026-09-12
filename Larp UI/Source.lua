@@ -624,6 +624,10 @@ function UILib:CreateTab(Name)
 		Window.GroupTransparency = 1
 		Window.Parent = PickerGui
 
+		Library:Drag(Window)
+		Library:Cells(Window)
+		Library:Stars(Window)
+
 		ApplyCorner(Window, Theme.CornerRadius)
 		ApplyStroke(Window, 1)
 
