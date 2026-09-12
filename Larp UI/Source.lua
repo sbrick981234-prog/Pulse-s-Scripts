@@ -79,6 +79,10 @@ function UILib:CreateWindow(UITitle)
 	Main.BorderSizePixel = 0
 	Main.Parent = ScreenGui
 
+	Library:Drag(Main)
+	Library:Cells(Main)
+	Library:Stars(Main)
+
 	ApplyCorner(Main)
 	ApplyStroke(Main, 1)
 
@@ -112,10 +116,6 @@ function UILib:CreateWindow(UITitle)
 
 	ApplyTextStyle(Title)
 	Title.TextSize = 15
-
-	Library:Drag(MainFrame)
-	Library:Cells(MainFrame)
-	Library:Stars(MainFrame)
 
 	local TabHolder = Instance.new("Frame")
 	TabHolder.Name = "TabHolder"
@@ -239,7 +239,6 @@ function UILib:CreateTab(Name)
 	TabMethods.__index = TabMethods
 
 	-----/Label/-----
-
 	function TabMethods:CreateLabel(Text)
 		local Label = Instance.new("TextLabel")
 		Label.Name = "Label"
