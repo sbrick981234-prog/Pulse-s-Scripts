@@ -3,10 +3,10 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 -----/Variables-----
-local SmoothDrag = {}
+local Library = {}
 
 -----/Functions-----
-function SmoothDrag:Attach(Frame)
+function SmoothDrag:Drag(Frame)
 	local Dragging = false
 	local DragStart = nil
 	local StartPosition = nil
@@ -52,4 +52,4 @@ function SmoothDrag:Attach(Frame)
 end
 
 -----/Main-----
-return SmoothDrag
+return Library
