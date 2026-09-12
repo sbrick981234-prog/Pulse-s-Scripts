@@ -669,11 +669,12 @@ function UILib:CreateTab(Name)
 		RGBLayout.Padding = UDim.new(0, 6)
 		RGBLayout.Parent = RGBContainer
 
-		local function CreateRGBBox(Name : string, DisplayName : string, DefaultValue : number)
+		local function CreateRGBBox(Name : string, DisplayName : string, DefaultValue : number, LayoutOrder : number)
 			local Container = Instance.new("Frame")
 			Container.Name = Name
 			Container.Size = UDim2.new(1, 0, 0, 32)
 			Container.BackgroundTransparency = 1
+			Container.LayoutOrder = Layout
 			Container.Parent = RGBContainer
 
 			local Text = Instance.new("TextLabel")
@@ -718,9 +719,9 @@ function UILib:CreateTab(Name)
 		local Green = math.round(Value.G * 255)
 		local Blue = math.round(Value.B * 255)
 
-		local RBox = CreateRGBBox("Red", "R", Red)
-		local GBox = CreateRGBBox("Green", "G", Green)
-		local BBox = CreateRGBBox("Blue", "B", Blue)
+		local RBox = CreateRGBBox("Red", "R", Red, 1)
+		local GBox = CreateRGBBox("Green", "G", Green, 2)
+		local BBox = CreateRGBBox("Blue", "B", Blue, 3)
 
 		-----/Color/-----
 		local ColorDisplay = Instance.new("Frame")
@@ -780,6 +781,32 @@ function UILib:CreateTab(Name)
 		end)
 
 		-----/Visibility/-----
+		local function SetStrokeTransparency(Transparency : number)
+			for _, Object in ipairs(Window:GetDescendants()) do
+				if Object:IsA("UIStroke") then
+					Object.Transparency = Transparency
+				end
+			end
+		end
+
+		local function TweenStrokes(Transparency : number, Duration : number)
+			for _, Object in ipairs(Window:GetDescendants()) do
+				if Object:IsA("UIStroke") then
+					TweenService:Create(
+						Object,
+						TweenInfo.new(
+							Duration,
+							Enum.EasingStyle.Quint,
+							Enum.EasingDirection.Out
+						),
+						{
+							Transparency = Transparency
+						}
+					):Play()
+				end
+			end
+		end
+
 		local function SetVisible(State : boolean)
 			Opened = State == true
 
@@ -794,19 +821,37 @@ function UILib:CreateTab(Name)
 
 				Window.Size = UDim2.new(0, 235, 0, 180)
 				Window.GroupTransparency = 1
+
+				SetStrokeTransparency(1)
+
 				PickerGui.Enabled = true
 
-				TweenService:Create(Window, Theme.TweenInfo, {
+				local OpenTweenInfo = TweenInfo.new(
+					0.45,
+					Enum.EasingStyle.Quint,
+					Enum.EasingDirection.Out
+				)
+
+				TweenService:Create(Window, OpenTweenInfo, {
 					Size = UDim2.new(0, 250, 0, 195),
 					GroupTransparency = 0
 				}):Play()
+
+				TweenStrokes(0, 0.45)
 			else
-				local Tween = TweenService:Create(Window, Theme.TweenInfo, {
+				local CloseTweenInfo = TweenInfo.new(
+					0.4,
+					Enum.EasingStyle.Quint,
+					Enum.EasingDirection.InOut
+				)
+
+				local Tween = TweenService:Create(Window, CloseTweenInfo, {
 					Size = UDim2.new(0, 235, 0, 180),
 					GroupTransparency = 1
 				})
 
 				Tween:Play()
+				TweenStrokes(1, 0.4)
 
 				Tween.Completed:Once(function()
 					if not Opened then
