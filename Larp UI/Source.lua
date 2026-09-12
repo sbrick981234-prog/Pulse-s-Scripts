@@ -1,3 +1,5 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/sbrick981234-prog/Pulse-s-Scripts/refs/heads/main/Library/Source.lua"))()
+
 -----/Services/-----
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -59,50 +61,6 @@ local function ApplyTextStyle(UIElement)
 	return UIElement
 end
 
-local function MakeDraggable(UIElement, DragHandle)
-	local Dragging = false
-	local DragInput
-	local MouseStart
-	local FrameStart
-
-	DragHandle.InputBegan:Connect(function(Input)
-		if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-			Dragging = true
-			MouseStart = Input.Position
-			FrameStart = UIElement.Position
-
-			Input.Changed:Connect(function()
-				if Input.UserInputState == Enum.UserInputState.End then
-					Dragging = false
-				end
-			end)
-		end
-	end)
-
-	DragHandle.InputChanged:Connect(function(Input)
-		if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
-			DragInput = Input
-		end
-	end)
-
-	UserInputService.InputChanged:Connect(function(Input)
-		if Dragging and Input == DragInput then
-			local Delta = Input.Position - MouseStart
-
-			local Goal = UDim2.new(
-				FrameStart.X.Scale,
-				FrameStart.X.Offset + Delta.X,
-				FrameStart.Y.Scale,
-				FrameStart.Y.Offset + Delta.Y
-			)
-
-			TweenService:Create(UIElement, Theme.TweenInfoDrag, {
-				Position = Goal
-			}):Play()
-		end
-	end)
-end
-
 -----/Window/-----
 function UILib:CreateWindow(UITitle)
 	UITitle = UITitle or "UI Lib"
@@ -155,7 +113,9 @@ function UILib:CreateWindow(UITitle)
 	ApplyTextStyle(Title)
 	Title.TextSize = 15
 
-	MakeDraggable(Main, TopBar)
+	Library:Drag(MainFrame)
+	Library:Cells(MainFrame)
+	Library:Stars(MainFrame)
 
 	local TabHolder = Instance.new("Frame")
 	TabHolder.Name = "TabHolder"
