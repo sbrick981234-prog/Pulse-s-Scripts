@@ -567,29 +567,29 @@ function UILib:CreateTab(Name)
 			end,
 		}
 	end
-	
+
 	-----/ColorPicker/-----
 	function TabMethods:CreateColorPicker(Config)
 		Config = Config or {}
 
-		local Value = typeof(Config.Default) == "Color3" and Config.Default or Color3.fromRGB(255,255,255)
+		local Value = typeof(Config.Default) == "Color3" and Config.Default or Color3.fromRGB(255, 255, 255)
 		local Opened = false
 
 		local Holder = Instance.new("TextButton")
 		Holder.Name = "ColorPicker"
-		Holder.Size = UDim2.new(1,0,0,34)
+		Holder.Size = UDim2.new(1, 0, 0, 34)
 		Holder.BackgroundColor3 = Theme.BackgroundLight
 		Holder.AutoButtonColor = false
 		Holder.Text = ""
 		Holder.Parent = Page
 
-		ApplyCorner(Holder,Theme.CornerRadiusSmall)
-		ApplyStroke(Holder,1)
+		ApplyCorner(Holder, Theme.CornerRadiusSmall)
+		ApplyStroke(Holder, 1)
 
 		local Label = Instance.new("TextLabel")
 		Label.Name = "Label"
-		Label.Size = UDim2.new(1,-48,1,0)
-		Label.Position = UDim2.new(0,6,0,0)
+		Label.Size = UDim2.new(1, -48, 1, 0)
+		Label.Position = UDim2.new(0, 6, 0, 0)
 		Label.BackgroundTransparency = 1
 		Label.Text = tostring(Config.Text or "Color Picker")
 		Label.TextXAlignment = Enum.TextXAlignment.Left
@@ -599,14 +599,14 @@ function UILib:CreateTab(Name)
 
 		local Preview = Instance.new("Frame")
 		Preview.Name = "Preview"
-		Preview.Size = UDim2.new(0,22,0,22)
-		Preview.Position = UDim2.new(1,-28,0.5,-11)
+		Preview.Size = UDim2.new(0, 22, 0, 22)
+		Preview.Position = UDim2.new(1, -28, 0.5, -11)
 		Preview.BackgroundColor3 = Value
 		Preview.BorderSizePixel = 0
 		Preview.Parent = Holder
 
-		ApplyCorner(Preview,UDim.new(0,5))
-		ApplyStroke(Preview,1)
+		ApplyCorner(Preview, UDim.new(0, 5))
+		ApplyStroke(Preview, 1)
 
 		local PickerGui = Instance.new("ScreenGui")
 		PickerGui.Name = "ColorPicker"
@@ -617,19 +617,19 @@ function UILib:CreateTab(Name)
 
 		local Window = Instance.new("CanvasGroup")
 		Window.Name = "Window"
-		Window.Size = UDim2.new(0,250,0,210)
+		Window.Size = UDim2.new(0, 250, 0, 175)
 		Window.BackgroundColor3 = Theme.Background
 		Window.BorderSizePixel = 0
 		Window.GroupTransparency = 1
 		Window.Parent = PickerGui
 
-		ApplyCorner(Window,Theme.CornerRadius)
-		ApplyStroke(Window,1)
+		ApplyCorner(Window, Theme.CornerRadius)
+		ApplyStroke(Window, 1)
 
 		local Title = Instance.new("TextLabel")
 		Title.Name = "Title"
-		Title.Size = UDim2.new(1,-40,0,32)
-		Title.Position = UDim2.new(0,10,0,0)
+		Title.Size = UDim2.new(1, -40, 0, 32)
+		Title.Position = UDim2.new(0, 10, 0, 0)
 		Title.BackgroundTransparency = 1
 		Title.Text = tostring(Config.Text or "Color Picker")
 		Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -640,8 +640,8 @@ function UILib:CreateTab(Name)
 
 		local Close = Instance.new("TextButton")
 		Close.Name = "Close"
-		Close.Size = UDim2.new(0,28,0,28)
-		Close.Position = UDim2.new(1,-32,0,2)
+		Close.Size = UDim2.new(0, 28, 0, 28)
+		Close.Position = UDim2.new(1, -32, 0, 2)
 		Close.BackgroundTransparency = 1
 		Close.Text = "×"
 		Close.Parent = Window
@@ -649,131 +649,127 @@ function UILib:CreateTab(Name)
 		ApplyTextStyle(Close)
 		Close.TextSize = 20
 
-		local Saturation = Instance.new("ImageButton")
-		Saturation.Name = "Saturation"
-		Saturation.Size = UDim2.new(1,-50,0,120)
-		Saturation.Position = UDim2.new(0,10,0,40)
-		Saturation.AutoButtonColor = false
-		Saturation.BorderSizePixel = 0
-		Saturation.BackgroundColor3 = Color3.fromRGB(255,0,0)
-		Saturation.Image = "rbxassetid://4155801252"
-		Saturation.Parent = Window
+		local RGBContainer = Instance.new("Frame")
+		RGBContainer.Name = "RGB"
+		RGBContainer.Size = UDim2.new(1, -20, 0, 108)
+		RGBContainer.Position = UDim2.new(0, 10, 0, 40)
+		RGBContainer.BackgroundTransparency = 1
+		RGBContainer.Parent = Window
 
-		ApplyCorner(Saturation,Theme.CornerRadiusSmall)
-		ApplyStroke(Saturation,1)
+		local RGBLayout = Instance.new("UIListLayout")
+		RGBLayout.FillDirection = Enum.FillDirection.Vertical
+		RGBLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		RGBLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+		RGBLayout.Padding = UDim.new(0, 6)
+		RGBLayout.Parent = RGBContainer
 
-		local Hue = Instance.new("ImageButton")
-		Hue.Name = "Hue"
-		Hue.Size = UDim2.new(0,18,0,120)
-		Hue.Position = UDim2.new(1,-28,0,40)
-		Hue.AutoButtonColor = false
-		Hue.BorderSizePixel = 0
-		Hue.Image = "rbxassetid://3641079629"
-		Hue.Parent = Window
+		local function CreateRGBBox(Name, DisplayName, DefaultValue)
+			local Container = Instance.new("Frame")
+			Container.Name = Name
+			Container.Size = UDim2.new(1, 0, 0, 32)
+			Container.BackgroundTransparency = 1
+			Container.Parent = RGBContainer
 
-		ApplyCorner(Hue,Theme.CornerRadiusSmall)
-		ApplyStroke(Hue,1)
+			local Text = Instance.new("TextLabel")
+			Text.Name = "Label"
+			Text.Size = UDim2.new(0, 25, 1, 0)
+			Text.Position = UDim2.new(0, 0, 0, 0)
+			Text.BackgroundTransparency = 1
+			Text.Text = DisplayName
+			Text.TextXAlignment = Enum.TextXAlignment.Left
+			Text.Parent = Container
+
+			ApplyTextStyle(Text)
+
+			local Box = Instance.new("TextBox")
+			Box.Name = "TextBox"
+			Box.Size = UDim2.new(1, -35, 1, 0)
+			Box.Position = UDim2.new(0, 35, 0, 0)
+			Box.BackgroundColor3 = Theme.BackgroundLight
+			Box.BorderSizePixel = 0
+			Box.ClearTextOnFocus = false
+			Box.Text = tostring(DefaultValue)
+			Box.PlaceholderText = "0 - 255"
+			Box.TextXAlignment = Enum.TextXAlignment.Left
+			Box.Parent = Container
+
+			ApplyCorner(Box, Theme.CornerRadiusSmall)
+			ApplyStroke(Box, 1)
+			ApplyTextStyle(Box)
+
+			Box:GetPropertyChangedSignal("Text"):Connect(function()
+				local TextValue = Box.Text:gsub("%D", "")
+
+				if TextValue ~= Box.Text then
+					Box.Text = TextValue
+				end
+			end)
+
+			return Box
+		end
+
+		local R, G, B = Value.R * 255, Value.G * 255, Value.B * 255
+
+		local RBox = CreateRGBBox("Red", "R", math.round(R))
+		local GBox = CreateRGBBox("Green", "G", math.round(G))
+		local BBox = CreateRGBBox("Blue", "B", math.round(B))
 
 		local ColorDisplay = Instance.new("Frame")
 		ColorDisplay.Name = "Color"
-		ColorDisplay.Size = UDim2.new(1,-20,0,28)
-		ColorDisplay.Position = UDim2.new(0,10,1,-38)
+		ColorDisplay.Size = UDim2.new(1, -20, 0, 28)
+		ColorDisplay.Position = UDim2.new(0, 10, 1, -38)
 		ColorDisplay.BackgroundColor3 = Value
 		ColorDisplay.BorderSizePixel = 0
 		ColorDisplay.Parent = Window
 
-		ApplyCorner(ColorDisplay,Theme.CornerRadiusSmall)
-		ApplyStroke(ColorDisplay,1)
+		ApplyCorner(ColorDisplay, Theme.CornerRadiusSmall)
+		ApplyStroke(ColorDisplay, 1)
 
-		local SaturationMarker = Instance.new("Frame")
-		SaturationMarker.Name = "Marker"
-		SaturationMarker.Size = UDim2.new(0,8,0,8)
-		SaturationMarker.AnchorPoint = Vector2.new(0.5,0.5)
-		SaturationMarker.BackgroundColor3 = Color3.fromRGB(255,255,255)
-		SaturationMarker.BorderSizePixel = 0
-		SaturationMarker.ZIndex = 5
-		SaturationMarker.Parent = Saturation
+		local Updating = false
 
-		ApplyCorner(SaturationMarker,UDim.new(1,0))
-		ApplyStroke(SaturationMarker,1)
+		local function GetRGB()
+			local Red = math.clamp(tonumber(RBox.Text) or 0, 0, 255)
+			local Green = math.clamp(tonumber(GBox.Text) or 0, 0, 255)
+			local Blue = math.clamp(tonumber(BBox.Text) or 0, 0, 255)
 
-		local HueMarker = Instance.new("Frame")
-		HueMarker.Name = "Marker"
-		HueMarker.Size = UDim2.new(1,0,0,3)
-		HueMarker.BackgroundColor3 = Color3.fromRGB(255,255,255)
-		HueMarker.BorderSizePixel = 0
-		HueMarker.ZIndex = 5
-		HueMarker.Parent = Hue
-
-		local H,S,V = Value:ToHSV()
+			return Red, Green, Blue
+		end
 
 		local function UpdateColor()
-			Value = Color3.fromHSV(H,S,V)
+			if Updating then
+				return
+			end
 
-			Saturation.BackgroundColor3 = Color3.fromHSV(H,1,1)
-			SaturationMarker.Position = UDim2.new(S,0,1-V,0)
-			HueMarker.Position = UDim2.new(0,0,H,0)
+			Updating = true
+
+			local Red, Green, Blue = GetRGB()
+
+			RBox.Text = tostring(math.round(Red))
+			GBox.Text = tostring(math.round(Green))
+			BBox.Text = tostring(math.round(Blue))
+
+			Value = Color3.fromRGB(Red, Green, Blue)
 
 			Preview.BackgroundColor3 = Value
 			ColorDisplay.BackgroundColor3 = Value
 
 			if typeof(Config.Callback) == "function" then
-				task.spawn(Config.Callback,Value)
+				task.spawn(Config.Callback, Value)
 			end
+
+			Updating = false
 		end
 
-		local function UpdateSaturation(Input)
-			local X = math.clamp((Input.Position.X-Saturation.AbsolutePosition.X)/Saturation.AbsoluteSize.X,0,1)
-			local Y = math.clamp((Input.Position.Y-Saturation.AbsolutePosition.Y)/Saturation.AbsoluteSize.Y,0,1)
-
-			S = X
-			V = 1-Y
-
+		RBox.FocusLost:Connect(function()
 			UpdateColor()
-		end
+		end)
 
-		local function UpdateHue(Input)
-			local Y = math.clamp((Input.Position.Y-Hue.AbsolutePosition.Y)/Hue.AbsoluteSize.Y,0,1)
-
-			H = Y
-
+		GBox.FocusLost:Connect(function()
 			UpdateColor()
-		end
-
-		local DraggingSaturation = false
-		local DraggingHue = false
-
-		Saturation.InputBegan:Connect(function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-				DraggingSaturation = true
-				
-				UpdateSaturation(Input)
-			end
 		end)
 
-		Hue.InputBegan:Connect(function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-				DraggingHue = true
-				
-				UpdateHue(Input)
-			end
-		end)
-
-		UserInputService.InputChanged:Connect(function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
-				if DraggingSaturation then
-					UpdateSaturation(Input)
-				elseif DraggingHue then
-					UpdateHue(Input)
-				end
-			end
-		end)
-
-		UserInputService.InputEnded:Connect(function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-				DraggingSaturation = false
-				DraggingHue = false
-			end
+		BBox.FocusLost:Connect(function()
+			UpdateColor()
 		end)
 
 		local function SetVisible(State)
@@ -784,21 +780,21 @@ function UILib:CreateTab(Name)
 				local AbsoluteSize = Holder.AbsoluteSize
 
 				Window.Position = UDim2.fromOffset(
-					AbsolutePosition.X+AbsoluteSize.X+8,
+					AbsolutePosition.X + AbsoluteSize.X + 8,
 					AbsolutePosition.Y
 				)
 
-				Window.Size = UDim2.new(0,235,0,195)
+				Window.Size = UDim2.new(0, 235, 0, 160)
 				Window.GroupTransparency = 1
 				PickerGui.Enabled = true
 
-				TweenService:Create(Window,Theme.TweenInfo,{
-					Size = UDim2.new(0,250,0,210),
+				TweenService:Create(Window, Theme.TweenInfo, {
+					Size = UDim2.new(0, 250, 0, 175),
 					GroupTransparency = 0
 				}):Play()
 			else
-				local Tween = TweenService:Create(Window,Theme.TweenInfo,{
-					Size = UDim2.new(0,235,0,195),
+				local Tween = TweenService:Create(Window, Theme.TweenInfo, {
+					Size = UDim2.new(0, 235, 0, 160),
 					GroupTransparency = 1
 				})
 
@@ -813,13 +809,13 @@ function UILib:CreateTab(Name)
 		end
 
 		Holder.MouseEnter:Connect(function()
-			TweenService:Create(Holder,Theme.TweenInfoFast,{
-				BackgroundColor3 = Color3.fromRGB(18,18,18)
+			TweenService:Create(Holder, Theme.TweenInfoFast, {
+				BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 			}):Play()
 		end)
 
 		Holder.MouseLeave:Connect(function()
-			TweenService:Create(Holder,Theme.TweenInfoFast,{
+			TweenService:Create(Holder, Theme.TweenInfoFast, {
 				BackgroundColor3 = Theme.BackgroundLight
 			}):Play()
 		end)
@@ -837,13 +833,21 @@ function UILib:CreateTab(Name)
 		return {
 			Object = Holder,
 
-			Set = function(_,NewColor)
+			Set = function(_, NewColor)
 				if typeof(NewColor) ~= "Color3" then
 					return
 				end
 
 				Value = NewColor
-				H,S,V = Value:ToHSV()
+
+				local Red = math.round(Value.R * 255)
+				local Green = math.round(Value.G * 255)
+				local Blue = math.round(Value.B * 255)
+
+				RBox.Text = tostring(Red)
+				GBox.Text = tostring(Green)
+				BBox.Text = tostring(Blue)
+
 				UpdateColor()
 			end,
 
@@ -865,7 +869,7 @@ function UILib:CreateTab(Name)
 			end,
 		}
 	end
-	
+
 	-----/Textbox/-----
 	function TabMethods:CreateTextbox(Config)
 		Config = Config or {}
