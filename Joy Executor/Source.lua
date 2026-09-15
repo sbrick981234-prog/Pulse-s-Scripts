@@ -7,36 +7,29 @@ local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
 -----/Configuration/-----
-
 local CONFIG = {
 	WindowSize = Vector2.new(800, 600),
-
-	-- Larp UI Style Colors (refined palette)
+	
 	Colors = {
-		-- Main Colors
 		Primary = Color3.fromRGB(60, 120, 160),
 		Secondary = Color3.fromRGB(45, 90, 125),
 		Accent = Color3.fromRGB(100, 150, 200),
 		
-		-- Window Elements
 		Window = Color3.fromRGB(240, 242, 245),
 		TitleBar = Color3.fromRGB(50, 90, 140),
 		MenuBar = Color3.fromRGB(235, 237, 240),
 		Toolbar = Color3.fromRGB(230, 233, 237),
 		StatusBar = Color3.fromRGB(220, 225, 232),
-
-		-- Editor
+		
 		Editor = Color3.fromRGB(255, 255, 255),
 		LineNumbers = Color3.fromRGB(245, 247, 250),
 		EditorBorder = Color3.fromRGB(200, 210, 220),
-
-		-- Text Colors
+		
 		Text = Color3.fromRGB(30, 40, 50),
 		TextLight = Color3.fromRGB(255, 255, 255),
 		TextSecondary = Color3.fromRGB(80, 100, 120),
 		TextTertiary = Color3.fromRGB(120, 140, 160),
-
-		-- Borders & Accents
+		
 		Border = Color3.fromRGB(180, 195, 210),
 		ButtonBorder = Color3.fromRGB(160, 180, 200),
 		Hover = Color3.fromRGB(220, 230, 240),
@@ -53,7 +46,6 @@ local CONFIG = {
 }
 
 -----/Utility Functions/-----
-
 local function CreateSound(Id, Volume)
 	if Id == nil or Id == "" then
 		return nil
@@ -121,7 +113,6 @@ local function CreateCorner(Object, Radius)
 end
 
 -----/Main GUI/-----
-
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "JoyExecutor"
 Gui.ResetOnSpawn = false
@@ -142,7 +133,6 @@ Main.Parent = Gui
 CreateCorner(Main, 8)
 
 -----/TitleBar/-----
-
 local TitleBar = Instance.new("CanvasGroup")
 TitleBar.Name = "TitleBar"
 TitleBar.Size = UDim2.new(1, 0, 0, 40)
@@ -206,7 +196,6 @@ local WindowButtons = {
 }
 
 -----/MenuBar/-----
-
 local MenuBar = Instance.new("CanvasGroup")
 MenuBar.Name = "MenuBar"
 MenuBar.Size = UDim2.new(1, 0, 0, 28)
@@ -238,7 +227,6 @@ for _, Item in ipairs(MenuItems) do
 end
 
 -----/ToolBar/-----
-
 local ToolBar = Instance.new("CanvasGroup")
 ToolBar.Name = "ToolBar"
 ToolBar.Size = UDim2.new(1, 0, 0, 40)
@@ -280,7 +268,6 @@ for _, Pos in ipairs(ToolPositions) do
 end
 
 -----/Editor/-----
-
 local EditorFrame = Instance.new("CanvasGroup")
 EditorFrame.Name = "Editor"
 EditorFrame.Size = UDim2.new(1, -16, 1, -130)
@@ -326,7 +313,6 @@ Code.TextYAlignment = Enum.TextYAlignment.Top
 Code.Parent = EditorFrame
 
 -----/StatusBar/-----
-
 local StatusBar = Instance.new("CanvasGroup")
 StatusBar.Name = "StatusBar"
 StatusBar.Size = UDim2.new(1, 0, 0, 30)
@@ -363,7 +349,6 @@ Position.TextYAlignment = Enum.TextYAlignment.Center
 Position.Parent = StatusBar
 
 -----/Core Functions/-----
-
 local function UpdateLines()
 	local Text = Code.Text or ""
 	Text = Text:gsub("\r\n", "\n")
@@ -405,7 +390,6 @@ local function UpdateCursorPosition()
 end
 
 -----/Editor Events/-----
-
 Code:GetPropertyChangedSignal("Text"):Connect(UpdateLines)
 Code:GetPropertyChangedSignal("CursorPosition"):Connect(UpdateCursorPosition)
 Code.Focused:Connect(UpdateCursorPosition)
@@ -415,7 +399,6 @@ UpdateLines()
 UpdateCursorPosition()
 
 -----/Button Events/-----
-
 ToolButtons.Clear.MouseButton1Click:Connect(function()
 	Code.Text = ""
 	Status.Text = "Editor cleared"
@@ -455,7 +438,6 @@ ToolButtons.Run.MouseButton1Click:Connect(function()
 end)
 
 -----/Window Controls/-----
-
 local Minimized = false
 local OldSize = Main.Size
 
@@ -509,7 +491,6 @@ WindowButtons.Close.MouseButton1Click:Connect(function()
 end)
 
 -----/Window Drag/-----
-
 local Dragging = false
 local DragStart
 local StartPosition
