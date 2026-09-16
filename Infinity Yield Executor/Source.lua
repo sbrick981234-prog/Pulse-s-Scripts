@@ -15,42 +15,42 @@ local DragStart = nil
 local StartPosition = nil
 
 -----/Assets/-----
-local BackgroundColor = Color3.fromRGB(46, 46, 47)
-local DarkColor = Color3.fromRGB(36, 36, 37)
-local HoverColor = Color3.fromRGB(52, 52, 53)
-local SelectedColor = Color3.fromRGB(60, 60, 61)
-local ScrollColor = Color3.fromRGB(78, 78, 79)
+local BackgroundColor = Color3.fromRGB(47, 47, 48)
+local DarkColor = Color3.fromRGB(37, 37, 38)
+local HoverColor = Color3.fromRGB(53, 53, 54)
+local SelectedColor = Color3.fromRGB(61, 61, 62)
+local ScrollColor = Color3.fromRGB(79, 79, 80)
 local TextColor = Color3.fromRGB(255, 255, 255)
-local SecondaryColor = Color3.fromRGB(170, 170, 170)
-local LineColor = Color3.fromRGB(110, 110, 111)
+local SecondaryColor = Color3.fromRGB(171, 171, 171)
+local LineColor = Color3.fromRGB(111, 111, 112)
 
 -----/Main/-----
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Executor"
-ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
 local Holder = Instance.new("Frame")
 Holder.Name = "Holder"
 Holder.Active = true
-Holder.BackgroundColor3 = BackgroundColor
 Holder.BorderSizePixel = 0
-Holder.Position = UDim2.new(1, -360, 1, -280)
+Holder.BackgroundColor3 = BackgroundColor
 Holder.Size = UDim2.new(0, 350, 0, 250)
+Holder.Position = UDim2.new(1, -360, 1, -280)
 Holder.Parent = ScreenGui
 
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Active = true
-Title.BackgroundColor3 = DarkColor
 Title.BorderSizePixel = 0
-Title.Size = UDim2.new(1, 0, 0, 20)
-Title.Font = Enum.Font.SourceSans
-Title.Text = "Executor"
-Title.TextColor3 = TextColor
 Title.TextSize = 18
 Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.BackgroundColor3 = DarkColor
+Title.Font = Enum.Font.SourceSans
+Title.TextColor3 = TextColor
+Title.Size = UDim2.new(1, 0, 0, 20)
+Title.Text = "Executor"
 Title.Parent = Holder
 
 local TitlePadding = Instance.new("UIPadding")
@@ -59,54 +59,54 @@ TitlePadding.Parent = Title
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
-CloseButton.BackgroundTransparency = 1
 CloseButton.BorderSizePixel = 0
-CloseButton.Position = UDim2.new(1, -20, 0, 0)
+CloseButton.ZIndex = 10
+CloseButton.BackgroundTransparency = 1
 CloseButton.Size = UDim2.new(0, 20, 0, 20)
 CloseButton.Text = ""
-CloseButton.ZIndex = 10
+CloseButton.Position = UDim2.new(1, -20, 0, 0)
 CloseButton.Parent = Title
 
 local CloseImage = Instance.new("ImageLabel")
 CloseImage.Name = "CloseImage"
+CloseImage.ZIndex = 10
+CloseImage.Image = "rbxassetid://5054663650"
+CloseImage.Size = UDim2.new(0, 10, 0, 10)
 CloseImage.BackgroundTransparency = 1
 CloseImage.Position = UDim2.new(0, 5, 0, 5)
-CloseImage.Size = UDim2.new(0, 10, 0, 10)
-CloseImage.Image = "rbxassetid://5054663650"
-CloseImage.ZIndex = 10
 CloseImage.Parent = CloseButton
 
 local SavedFrame = Instance.new("Frame")
 SavedFrame.Name = "Saved"
-SavedFrame.BackgroundColor3 = DarkColor
 SavedFrame.BorderSizePixel = 0
-SavedFrame.Position = UDim2.new(0, 4, 0, 24)
+SavedFrame.BackgroundColor3 = DarkColor
 SavedFrame.Size = UDim2.new(0, 82, 0, 191)
+SavedFrame.Position = UDim2.new(0, 4, 0, 24)
 SavedFrame.Parent = Holder
 
 local SavedTitle = Instance.new("TextLabel")
 SavedTitle.Name = "Title"
-SavedTitle.BackgroundTransparency = 1
 SavedTitle.BorderSizePixel = 0
-SavedTitle.Position = UDim2.new(0, 4, 0, 1)
-SavedTitle.Size = UDim2.new(1, -8, 0, 18)
-SavedTitle.Font = Enum.Font.SourceSans
-SavedTitle.Text = "Scripts"
-SavedTitle.TextColor3 = TextColor
 SavedTitle.TextSize = 16
 SavedTitle.TextXAlignment = Enum.TextXAlignment.Left
+SavedTitle.Font = Enum.Font.SourceSans
+SavedTitle.TextColor3 = TextColor
+SavedTitle.BackgroundTransparency = 1
+SavedTitle.Size = UDim2.new(1, -8, 0, 18)
+SavedTitle.Text = "Scripts"
+SavedTitle.Position = UDim2.new(0, 4, 0, 1)
 SavedTitle.Parent = SavedFrame
 
 local ScriptsList = Instance.new("ScrollingFrame")
 ScriptsList.Name = "List"
 ScriptsList.Active = true
-ScriptsList.BackgroundTransparency = 1
 ScriptsList.BorderSizePixel = 0
-ScriptsList.Position = UDim2.new(0, 3, 0, 20)
+ScriptsList.CanvasSize = UDim2.new(0, 0, 0, 3)
 ScriptsList.Size = UDim2.new(1, -6, 1, -23)
-ScriptsList.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScriptsList.ScrollBarThickness = 6
 ScriptsList.ScrollBarImageColor3 = ScrollColor
+ScriptsList.Position = UDim2.new(0, 3, 0, 20)
+ScriptsList.ScrollBarThickness = 6
+ScriptsList.BackgroundTransparency = 1
 ScriptsList.Parent = SavedFrame
 
 local ScriptsLayout = Instance.new("UIListLayout")
@@ -116,105 +116,102 @@ ScriptsLayout.Parent = ScriptsList
 
 local CodeFrame = Instance.new("Frame")
 CodeFrame.Name = "Code"
-CodeFrame.BackgroundColor3 = DarkColor
 CodeFrame.BorderSizePixel = 0
-CodeFrame.Position = UDim2.new(0, 90, 0, 24)
-CodeFrame.Size = UDim2.new(1, -94, 0, 191)
+CodeFrame.BackgroundColor3 = DarkColor
 CodeFrame.ClipsDescendants = true
+CodeFrame.Size = UDim2.new(1, -94, 0, 191)
+CodeFrame.Position = UDim2.new(0, 90, 0, 24)
 CodeFrame.Parent = Holder
 
 local Lines = Instance.new("ScrollingFrame")
 Lines.Name = "Lines"
 Lines.Active = false
-Lines.BackgroundColor3 = DarkColor
 Lines.BorderSizePixel = 0
-Lines.Position = UDim2.new(0, 0, 0, 0)
-Lines.Size = UDim2.new(0, 22, 1, 0)
-Lines.CanvasSize = UDim2.new(0, 0, 0, 0)
-Lines.ScrollBarThickness = 0
+Lines.CanvasSize = UDim2.new(0, 0, 0, 191)
 Lines.ScrollingEnabled = false
+Lines.BackgroundColor3 = DarkColor
+Lines.Size = UDim2.new(0, 20, 1, 0)
+Lines.ScrollBarThickness = 0
 Lines.ClipsDescendants = true
 Lines.Parent = CodeFrame
 
 local LinesText = Instance.new("TextLabel")
 LinesText.Name = "Text"
-LinesText.BackgroundTransparency = 1
 LinesText.BorderSizePixel = 0
-LinesText.Position = UDim2.new(0, 0, 0, 4)
-LinesText.Size = UDim2.new(1, 0, 0, 18)
-LinesText.Font = Enum.Font.Code
-LinesText.Text = "1"
-LinesText.TextColor3 = LineColor
 LinesText.TextSize = 14
 LinesText.TextXAlignment = Enum.TextXAlignment.Right
 LinesText.TextYAlignment = Enum.TextYAlignment.Top
+LinesText.Font = Enum.Font.Code
+LinesText.TextColor3 = LineColor
+LinesText.BackgroundTransparency = 1
+LinesText.Size = UDim2.new(1, 0, 0, 191)
+LinesText.Text = "1"
+LinesText.Position = UDim2.new(0, 0, 0, 4)
 LinesText.Parent = Lines
 
 local LinesPadding = Instance.new("UIPadding")
-LinesPadding.PaddingRight = UDim.new(0, 3)
+LinesPadding.PaddingRight = UDim.new(0, 5)
 LinesPadding.Parent = LinesText
 
 local CodeScroll = Instance.new("ScrollingFrame")
 CodeScroll.Name = "CodeScroll"
 CodeScroll.Active = true
-CodeScroll.BackgroundTransparency = 1
 CodeScroll.BorderSizePixel = 0
-CodeScroll.Position = UDim2.new(0, 22, 0, 0)
-CodeScroll.Size = UDim2.new(1, -22, 1, 0)
-CodeScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-CodeScroll.ScrollBarThickness = 6
+CodeScroll.CanvasSize = UDim2.new(0, 226, 0, 191)
+CodeScroll.Size = UDim2.new(1, -20, 1, 0)
 CodeScroll.ScrollBarImageColor3 = ScrollColor
+CodeScroll.Position = UDim2.new(0, 20, 0, 0)
+CodeScroll.ScrollBarThickness = 6
+CodeScroll.BackgroundTransparency = 1
 CodeScroll.ScrollingDirection = Enum.ScrollingDirection.XY
 CodeScroll.ClipsDescendants = true
 CodeScroll.Parent = CodeFrame
 
 local CodeBox = Instance.new("TextBox")
 CodeBox.Name = "CodeBox"
-CodeBox.BackgroundTransparency = 1
-CodeBox.BorderSizePixel = 0
-CodeBox.ClearTextOnFocus = false
-CodeBox.MultiLine = true
-CodeBox.Position = UDim2.new(0, 5, 0, 4)
-CodeBox.Size = UDim2.new(1, -10, 0, 18)
-CodeBox.AutomaticSize = Enum.AutomaticSize.Y
-CodeBox.Font = Enum.Font.Code
-CodeBox.PlaceholderColor3 = SecondaryColor
-CodeBox.PlaceholderText = "-- Write your script here"
-CodeBox.Text = ""
-CodeBox.TextColor3 = TextColor
-CodeBox.TextSize = 14
-CodeBox.TextWrapped = false
 CodeBox.TextXAlignment = Enum.TextXAlignment.Left
+CodeBox.PlaceholderColor3 = SecondaryColor
+CodeBox.BorderSizePixel = 0
+CodeBox.TextSize = 14
+CodeBox.TextColor3 = TextColor
 CodeBox.TextYAlignment = Enum.TextYAlignment.Top
+CodeBox.Font = Enum.Font.Code
+CodeBox.AutomaticSize = Enum.AutomaticSize.Y
+CodeBox.MultiLine = true
+CodeBox.ClearTextOnFocus = false
+CodeBox.PlaceholderText = "-- Write your script here"
+CodeBox.Size = UDim2.new(1, -10, 0, 18)
+CodeBox.Position = UDim2.new(0, 5, 0, 4)
+CodeBox.Text = ""
+CodeBox.BackgroundTransparency = 1
 CodeBox.Parent = CodeScroll
 
 local ButtonsFrame = Instance.new("Frame")
 ButtonsFrame.Name = "Buttons"
-ButtonsFrame.BackgroundColor3 = DarkColor
 ButtonsFrame.BorderSizePixel = 0
-ButtonsFrame.Position = UDim2.new(0, 4, 0, 219)
+ButtonsFrame.BackgroundColor3 = DarkColor
 ButtonsFrame.Size = UDim2.new(1, -8, 0, 27)
+ButtonsFrame.Position = UDim2.new(0, 4, 0, 219)
 ButtonsFrame.Parent = Holder
 
 local ButtonsLayout = Instance.new("UIListLayout")
-ButtonsLayout.FillDirection = Enum.FillDirection.Horizontal
-ButtonsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+ButtonsLayout.Padding = UDim.new(0, 2)
 ButtonsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 ButtonsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ButtonsLayout.Padding = UDim.new(0, 2)
+ButtonsLayout.FillDirection = Enum.FillDirection.Horizontal
 ButtonsLayout.Parent = ButtonsFrame
 
 local function CreateButton(Name : string)
 	local Button = Instance.new("TextButton")
 	Button.Name = Name
-	Button.BackgroundColor3 = BackgroundColor
 	Button.BorderSizePixel = 0
-	Button.Size = UDim2.new(0.25, -1.5, 1, 0)
-	Button.Font = Enum.Font.SourceSans
-	Button.Text = Name
-	Button.TextColor3 = TextColor
 	Button.TextSize = 16
 	Button.AutoButtonColor = false
+	Button.TextColor3 = TextColor
+	Button.BackgroundColor3 = BackgroundColor
+	Button.Font = Enum.Font.SourceSans
+	Button.Size = UDim2.new(0.25, -1, 1, 0)
+	Button.Text = Name
 	Button.Parent = ButtonsFrame
 
 	Button.MouseEnter:Connect(function()
@@ -237,77 +234,77 @@ local LoadButton = CreateButton("Load")
 local ContextMenu = Instance.new("Frame")
 ContextMenu.Name = "ContextMenu"
 ContextMenu.Visible = false
-ContextMenu.BackgroundColor3 = DarkColor
-ContextMenu.BorderSizePixel = 0
-ContextMenu.Size = UDim2.new(0, 100, 0, 44)
 ContextMenu.ZIndex = 20
+ContextMenu.BorderSizePixel = 0
+ContextMenu.BackgroundColor3 = DarkColor
+ContextMenu.Size = UDim2.new(0, 100, 0, 44)
 ContextMenu.Parent = ScreenGui
 
 local RenameButton = Instance.new("TextButton")
 RenameButton.Name = "Rename"
-RenameButton.BackgroundColor3 = DarkColor
 RenameButton.BorderSizePixel = 0
-RenameButton.Size = UDim2.new(1, 0, 0, 22)
-RenameButton.Font = Enum.Font.SourceSans
-RenameButton.Text = "Rename"
-RenameButton.TextColor3 = TextColor
 RenameButton.TextSize = 15
 RenameButton.AutoButtonColor = false
+RenameButton.TextColor3 = TextColor
+RenameButton.BackgroundColor3 = DarkColor
+RenameButton.Font = Enum.Font.SourceSans
 RenameButton.ZIndex = 21
+RenameButton.Size = UDim2.new(1, 0, 0, 22)
+RenameButton.Text = "Rename"
 RenameButton.Parent = ContextMenu
 
 local DeleteButton = Instance.new("TextButton")
 DeleteButton.Name = "Delete"
-DeleteButton.BackgroundColor3 = DarkColor
 DeleteButton.BorderSizePixel = 0
-DeleteButton.Position = UDim2.new(0, 0, 0, 22)
-DeleteButton.Size = UDim2.new(1, 0, 0, 22)
-DeleteButton.Font = Enum.Font.SourceSans
-DeleteButton.Text = "Delete"
-DeleteButton.TextColor3 = TextColor
 DeleteButton.TextSize = 15
 DeleteButton.AutoButtonColor = false
+DeleteButton.TextColor3 = TextColor
+DeleteButton.BackgroundColor3 = DarkColor
+DeleteButton.Font = Enum.Font.SourceSans
 DeleteButton.ZIndex = 21
+DeleteButton.Size = UDim2.new(1, 0, 0, 22)
+DeleteButton.Text = "Delete"
+DeleteButton.Position = UDim2.new(0, 0, 0, 22)
 DeleteButton.Parent = ContextMenu
 
 -----/Rename Window/-----
 local RenameFrame = Instance.new("Frame")
 RenameFrame.Name = "RenameFrame"
 RenameFrame.Visible = false
-RenameFrame.BackgroundColor3 = DarkColor
-RenameFrame.BorderSizePixel = 0
-RenameFrame.Position = UDim2.new(0.5, -100, 0.5, -30)
-RenameFrame.Size = UDim2.new(0, 200, 0, 60)
 RenameFrame.ZIndex = 30
+RenameFrame.BorderSizePixel = 0
+RenameFrame.BackgroundColor3 = DarkColor
+RenameFrame.Size = UDim2.new(0, 200, 0, 60)
+RenameFrame.Position = UDim2.new(0.5, -100, 0.5, -30)
 RenameFrame.Parent = ScreenGui
 
 local RenameBox = Instance.new("TextBox")
 RenameBox.Name = "Name"
-RenameBox.BackgroundColor3 = BackgroundColor
-RenameBox.BorderSizePixel = 0
-RenameBox.Position = UDim2.new(0, 4, 0, 4)
-RenameBox.Size = UDim2.new(1, -8, 0, 24)
-RenameBox.Font = Enum.Font.SourceSans
-RenameBox.PlaceholderText = "Script name"
-RenameBox.Text = ""
-RenameBox.TextColor3 = TextColor
-RenameBox.TextSize = 15
-RenameBox.ClearTextOnFocus = false
 RenameBox.ZIndex = 31
+RenameBox.BorderSizePixel = 0
+RenameBox.TextSize = 15
+RenameBox.TextColor3 = TextColor
+RenameBox.BackgroundColor3 = BackgroundColor
+RenameBox.Font = Enum.Font.SourceSans
+RenameBox.ClearTextOnFocus = false
+RenameBox.PlaceholderText = "Script name"
+RenameBox.Size = UDim2.new(1, -8, 0, 24)
+RenameBox.Position = UDim2.new(0, 4, 0, 4)
+RenameBox.Text = ""
 RenameBox.Parent = RenameFrame
 
 local RenameConfirm = Instance.new("TextButton")
 RenameConfirm.Name = "Confirm"
-RenameConfirm.BackgroundColor3 = BackgroundColor
 RenameConfirm.BorderSizePixel = 0
-RenameConfirm.Position = UDim2.new(0, 4, 0, 32)
-RenameConfirm.Size = UDim2.new(1, -8, 0, 23)
-RenameConfirm.Font = Enum.Font.SourceSans
-RenameConfirm.Text = "Rename"
-RenameConfirm.TextColor3 = TextColor
 RenameConfirm.TextSize = 15
 RenameConfirm.AutoButtonColor = false
+RenameConfirm.TextColor3 = TextColor
+RenameConfirm.BackgroundColor3 = BackgroundColor
+RenameConfirm.Font = Enum.Font.SourceSans
 RenameConfirm.ZIndex = 31
+RenameConfirm.Size = UDim2.new(1, -8, 0, 23)
+RenameConfirm.Text = "Rename"
+RenameConfirm.Position = UDim2.new(0, 4, 0, 32)
 RenameConfirm.Parent = RenameFrame
 
 -----/Functions/-----
@@ -327,17 +324,18 @@ end
 
 local function UpdateLines()
 	local LineCount = GetLineCount(CodeBox.Text)
-	local LinesTextData = table.create(LineCount)
+	local LineData = table.create(LineCount)
 
 	for Index = 1, LineCount do
-		LinesTextData[Index] = tostring(Index)
+		LineData[Index] = tostring(Index)
 	end
 
-	LinesText.Text = table.concat(LinesTextData, "\n")
+	LinesText.Text = table.concat(LineData, "\n")
 
 	local Height = math.max(CodeBox.AbsoluteSize.Y + 8, CodeScroll.AbsoluteSize.Y)
 
 	Lines.CanvasSize = UDim2.new(0, 0, 0, Height)
+
 	CodeScroll.CanvasSize = UDim2.new(
 		0,
 		math.max(CodeBox.AbsoluteSize.X + 10, CodeScroll.AbsoluteSize.X),
@@ -426,7 +424,6 @@ local function RefreshScripts()
 		Button.MouseButton2Click:Connect(function()
 			ContextScript = Index
 			SelectedScript = Index
-
 			CodeBox.Text = Data.Source
 
 			ContextMenu.Position = UDim2.new(
@@ -437,8 +434,8 @@ local function RefreshScripts()
 			)
 
 			ContextMenu.Visible = true
-
 			RefreshScripts()
+
 			task.defer(UpdateLines)
 		end)
 	end
@@ -476,7 +473,6 @@ local function LoadScript()
 	end
 
 	CodeBox.Text = Data.Source
-
 	task.defer(UpdateLines)
 end
 
@@ -525,7 +521,6 @@ local function OpenRename()
 
 	SelectedScript = Index
 	ContextScript = Index
-
 	ContextMenu.Visible = false
 
 	RenameBox.Text = Data.Name
