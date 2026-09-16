@@ -29,6 +29,7 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Executor"
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999999999
 ScreenGui.Parent = PlayerGui
 
 local Holder = Instance.new("Frame")
