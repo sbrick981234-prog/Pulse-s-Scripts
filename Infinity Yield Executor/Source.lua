@@ -114,7 +114,6 @@ ScriptsLayout.Padding = UDim.new(0, 1)
 ScriptsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ScriptsLayout.Parent = ScriptsList
 
------/Code Editor/-----
 local CodeFrame = Instance.new("Frame")
 CodeFrame.Name = "Code"
 CodeFrame.BackgroundColor3 = DarkColor
@@ -130,7 +129,7 @@ Lines.Active = false
 Lines.BackgroundColor3 = DarkColor
 Lines.BorderSizePixel = 0
 Lines.Position = UDim2.new(0, 0, 0, 0)
-Lines.Size = UDim2.new(0, 30, 1, 0)
+Lines.Size = UDim2.new(0, 22, 1, 0)
 Lines.CanvasSize = UDim2.new(0, 0, 0, 0)
 Lines.ScrollBarThickness = 0
 Lines.ScrollingEnabled = false
@@ -152,7 +151,7 @@ LinesText.TextYAlignment = Enum.TextYAlignment.Top
 LinesText.Parent = Lines
 
 local LinesPadding = Instance.new("UIPadding")
-LinesPadding.PaddingRight = UDim.new(0, 5)
+LinesPadding.PaddingRight = UDim.new(0, 3)
 LinesPadding.Parent = LinesText
 
 local CodeScroll = Instance.new("ScrollingFrame")
@@ -160,8 +159,8 @@ CodeScroll.Name = "CodeScroll"
 CodeScroll.Active = true
 CodeScroll.BackgroundTransparency = 1
 CodeScroll.BorderSizePixel = 0
-CodeScroll.Position = UDim2.new(0, 30, 0, 0)
-CodeScroll.Size = UDim2.new(1, -30, 1, 0)
+CodeScroll.Position = UDim2.new(0, 22, 0, 0)
+CodeScroll.Size = UDim2.new(1, -22, 1, 0)
 CodeScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 CodeScroll.ScrollBarThickness = 6
 CodeScroll.ScrollBarImageColor3 = ScrollColor
@@ -189,7 +188,6 @@ CodeBox.TextXAlignment = Enum.TextXAlignment.Left
 CodeBox.TextYAlignment = Enum.TextYAlignment.Top
 CodeBox.Parent = CodeScroll
 
------/Buttons/-----
 local ButtonsFrame = Instance.new("Frame")
 ButtonsFrame.Name = "Buttons"
 ButtonsFrame.BackgroundColor3 = DarkColor
@@ -329,17 +327,15 @@ end
 
 local function UpdateLines()
 	local LineCount = GetLineCount(CodeBox.Text)
-	local LineHeight = 18
-	local Height = math.max(LineCount * LineHeight + 8, CodeFrame.AbsoluteSize.Y)
-
-	local Numbers = table.create(LineCount)
+	local LinesTextData = table.create(LineCount)
 
 	for Index = 1, LineCount do
-		Numbers[Index] = tostring(Index)
+		LinesTextData[Index] = tostring(Index)
 	end
 
-	LinesText.Text = table.concat(Numbers, "\n")
-	LinesText.Size = UDim2.new(1, 0, 0, Height)
+	LinesText.Text = table.concat(LinesTextData, "\n")
+
+	local Height = math.max(CodeBox.AbsoluteSize.Y + 8, CodeScroll.AbsoluteSize.Y)
 
 	Lines.CanvasSize = UDim2.new(0, 0, 0, Height)
 	CodeScroll.CanvasSize = UDim2.new(
@@ -367,7 +363,6 @@ local function SelectScript(Index : number)
 
 	SelectedScript = Index
 	CodeBox.Text = Data.Source
-	CodeScroll.CanvasPosition = Vector2.zero
 
 	for _, Object in ipairs(ScriptsList:GetChildren()) do
 		if Object:IsA("TextButton") then
@@ -381,7 +376,7 @@ local function SelectScript(Index : number)
 		Button.BackgroundColor3 = SelectedColor
 	end
 
-	UpdateLines()
+	task.defer(UpdateLines)
 end
 
 local function RefreshScripts()
@@ -431,8 +426,8 @@ local function RefreshScripts()
 		Button.MouseButton2Click:Connect(function()
 			ContextScript = Index
 			SelectedScript = Index
+
 			CodeBox.Text = Data.Source
-			CodeScroll.CanvasPosition = Vector2.zero
 
 			ContextMenu.Position = UDim2.new(
 				0,
@@ -443,7 +438,8 @@ local function RefreshScripts()
 
 			ContextMenu.Visible = true
 
-			UpdateLines()
+			RefreshScripts()
+			task.defer(UpdateLines)
 		end)
 	end
 
@@ -480,9 +476,8 @@ local function LoadScript()
 	end
 
 	CodeBox.Text = Data.Source
-	CodeScroll.CanvasPosition = Vector2.zero
 
-	UpdateLines()
+	task.defer(UpdateLines)
 end
 
 local function DeleteScript()
@@ -512,7 +507,7 @@ local function DeleteScript()
 	ContextMenu.Visible = false
 
 	RefreshScripts()
-	UpdateLines()
+	task.defer(UpdateLines)
 end
 
 local function OpenRename()
@@ -573,10 +568,9 @@ ClearButton.MouseButton1Click:Connect(function()
 	SelectedScript = nil
 	ContextScript = nil
 	ContextMenu.Visible = false
-	CodeScroll.CanvasPosition = Vector2.zero
 
 	RefreshScripts()
-	UpdateLines()
+	task.defer(UpdateLines)
 end)
 
 ExecuteButton.MouseButton1Click:Connect(function()
@@ -667,15 +661,6 @@ UserInputService.InputBegan:Connect(function(Input)
 	end
 end)
 
------/Code Scrolling/-----
-CodeScroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-	UpdateScroll()
-end)
-
-CodeBox:GetPropertyChangedSignal("Text"):Connect(function()
-	UpdateLines()
-end)
-
 -----/Dragging/-----
 Title.InputBegan:Connect(function(Input)
 	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -710,9 +695,27 @@ UserInputService.InputChanged:Connect(function(Input)
 	)
 end)
 
+-----/Lines/-----
+CodeBox:GetPropertyChangedSignal("Text"):Connect(function()
+	UpdateLines()
+end)
+
+CodeBox:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+	UpdateLines()
+end)
+
+CodeScroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+	UpdateScroll()
+end)
+
+CodeScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+	UpdateLines()
+end)
+
 -----/Init/-----
 ScriptsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvas)
 
 UpdateCanvas()
-RefreshScripts()
 UpdateLines()
+UpdateScroll()
+RefreshScripts()
