@@ -6,516 +6,597 @@ local UserInputService = game:GetService("UserInputService")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
------/Configuration/-----
-local CONFIG = {
-	WindowSize = Vector2.new(800, 600),
-	
-	Colors = {
-		Primary = Color3.fromRGB(60, 120, 160),
-		Secondary = Color3.fromRGB(45, 90, 125),
-		Accent = Color3.fromRGB(100, 150, 200),
-		
-		Window = Color3.fromRGB(240, 242, 245),
-		TitleBar = Color3.fromRGB(50, 90, 140),
-		MenuBar = Color3.fromRGB(235, 237, 240),
-		Toolbar = Color3.fromRGB(230, 233, 237),
-		StatusBar = Color3.fromRGB(220, 225, 232),
-		
-		Editor = Color3.fromRGB(255, 255, 255),
-		LineNumbers = Color3.fromRGB(245, 247, 250),
-		EditorBorder = Color3.fromRGB(200, 210, 220),
-		
-		Text = Color3.fromRGB(30, 40, 50),
-		TextLight = Color3.fromRGB(255, 255, 255),
-		TextSecondary = Color3.fromRGB(80, 100, 120),
-		TextTertiary = Color3.fromRGB(120, 140, 160),
-		
-		Border = Color3.fromRGB(180, 195, 210),
-		ButtonBorder = Color3.fromRGB(160, 180, 200),
-		Hover = Color3.fromRGB(220, 230, 240),
-		Active = Color3.fromRGB(100, 150, 200),
-	},
+local SavedScripts = {}
+local SelectedScript = nil
+local ContextScript = nil
 
-	Sounds = {
-		Hover = "",
-		Click = "",
-		Open = "",
-		Close = "",
-		Error = "",
-	}
-}
+local Dragging = false
+local DragStart = nil
+local StartPosition = nil
 
------/Utility Functions/-----
-local function CreateSound(Id, Volume)
-	if Id == nil or Id == "" then
-		return nil
-	end
+-----/Assets/-----
+local BackgroundColor = Color3.fromRGB(46, 46, 47)
+local DarkColor = Color3.fromRGB(36, 36, 37)
+local HoverColor = Color3.fromRGB(52, 52, 53)
+local SelectedColor = Color3.fromRGB(60, 60, 61)
+local ScrollColor = Color3.fromRGB(78, 78, 79)
+local TextColor = Color3.fromRGB(255, 255, 255)
+local SecondaryColor = Color3.fromRGB(170, 170, 170)
 
-	local Sound = Instance.new("Sound")
-	Sound.SoundId = Id
-	Sound.Volume = Volume or 0.35
-	Sound.Parent = PlayerGui
+-----/Main/-----
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Executor"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = PlayerGui
 
-	return Sound
-end
+local Holder = Instance.new("Frame")
+Holder.Name = "Holder"
+Holder.Active = true
+Holder.BackgroundColor3 = BackgroundColor
+Holder.BorderSizePixel = 0
+Holder.Position = UDim2.new(1, -360, 1, -280)
+Holder.Size = UDim2.new(0, 350, 0, 250)
+Holder.Parent = ScreenGui
 
-local function PlaySound(Id, Volume)
-	local Sound = CreateSound(Id, Volume)
-	if not Sound then return end
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Active = true
+Title.BackgroundColor3 = DarkColor
+Title.BorderSizePixel = 0
+Title.Size = UDim2.new(1, 0, 0, 20)
+Title.Font = Enum.Font.SourceSans
+Title.Text = "Executor"
+Title.TextColor3 = TextColor
+Title.TextSize = 18
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Holder
 
-	Sound:Play()
-	Sound.Ended:Once(function() Sound:Destroy() end)
-	task.delay(5, function()
-		if Sound.Parent then Sound:Destroy() end
-	end)
-end
+local TitlePadding = Instance.new("UIPadding")
+TitlePadding.PaddingLeft = UDim.new(0, 5)
+TitlePadding.Parent = Title
 
-local function CreateButton(Parent, Config)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.BackgroundTransparency = 1
+CloseButton.BorderSizePixel = 0
+CloseButton.Position = UDim2.new(1, -20, 0, 0)
+CloseButton.Size = UDim2.new(0, 20, 0, 20)
+CloseButton.Text = ""
+CloseButton.ZIndex = 10
+CloseButton.Parent = Title
+
+local CloseImage = Instance.new("ImageLabel")
+CloseImage.Name = "CloseImage"
+CloseImage.BackgroundTransparency = 1
+CloseImage.Position = UDim2.new(0, 5, 0, 5)
+CloseImage.Size = UDim2.new(0, 10, 0, 10)
+CloseImage.Image = "rbxassetid://5054663650"
+CloseImage.ZIndex = 10
+CloseImage.Parent = CloseButton
+
+local SavedFrame = Instance.new("Frame")
+SavedFrame.Name = "Saved"
+SavedFrame.BackgroundColor3 = DarkColor
+SavedFrame.BorderSizePixel = 0
+SavedFrame.Position = UDim2.new(0, 4, 0, 24)
+SavedFrame.Size = UDim2.new(0, 82, 0, 191)
+SavedFrame.Parent = Holder
+
+local SavedTitle = Instance.new("TextLabel")
+SavedTitle.Name = "Title"
+SavedTitle.BackgroundTransparency = 1
+SavedTitle.BorderSizePixel = 0
+SavedTitle.Position = UDim2.new(0, 4, 0, 1)
+SavedTitle.Size = UDim2.new(1, -8, 0, 18)
+SavedTitle.Font = Enum.Font.SourceSans
+SavedTitle.Text = "Scripts"
+SavedTitle.TextColor3 = TextColor
+SavedTitle.TextSize = 16
+SavedTitle.TextXAlignment = Enum.TextXAlignment.Left
+SavedTitle.Parent = SavedFrame
+
+local ScriptsList = Instance.new("ScrollingFrame")
+ScriptsList.Name = "List"
+ScriptsList.Active = true
+ScriptsList.BackgroundTransparency = 1
+ScriptsList.BorderSizePixel = 0
+ScriptsList.Position = UDim2.new(0, 3, 0, 20)
+ScriptsList.Size = UDim2.new(1, -6, 1, -23)
+ScriptsList.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScriptsList.ScrollBarThickness = 6
+ScriptsList.ScrollBarImageColor3 = ScrollColor
+ScriptsList.Parent = SavedFrame
+
+local ScriptsLayout = Instance.new("UIListLayout")
+ScriptsLayout.Padding = UDim.new(0, 1)
+ScriptsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ScriptsLayout.Parent = ScriptsList
+
+local CodeFrame = Instance.new("Frame")
+CodeFrame.Name = "Code"
+CodeFrame.BackgroundColor3 = DarkColor
+CodeFrame.BorderSizePixel = 0
+CodeFrame.Position = UDim2.new(0, 90, 0, 24)
+CodeFrame.Size = UDim2.new(1, -94, 0, 191)
+CodeFrame.Parent = Holder
+
+local CodeBox = Instance.new("TextBox")
+CodeBox.Name = "CodeBox"
+CodeBox.BackgroundTransparency = 1
+CodeBox.BorderSizePixel = 0
+CodeBox.ClearTextOnFocus = false
+CodeBox.MultiLine = true
+CodeBox.Position = UDim2.new(0, 5, 0, 4)
+CodeBox.Size = UDim2.new(1, -10, 1, -8)
+CodeBox.Font = Enum.Font.Code
+CodeBox.PlaceholderColor3 = SecondaryColor
+CodeBox.PlaceholderText = "-- Write your script here"
+CodeBox.Text = ""
+CodeBox.TextColor3 = TextColor
+CodeBox.TextSize = 14
+CodeBox.TextWrapped = false
+CodeBox.TextXAlignment = Enum.TextXAlignment.Left
+CodeBox.TextYAlignment = Enum.TextYAlignment.Top
+CodeBox.Parent = CodeFrame
+
+local ButtonsFrame = Instance.new("Frame")
+ButtonsFrame.Name = "Buttons"
+ButtonsFrame.BackgroundColor3 = DarkColor
+ButtonsFrame.BorderSizePixel = 0
+ButtonsFrame.Position = UDim2.new(0, 4, 0, 219)
+ButtonsFrame.Size = UDim2.new(1, -8, 0, 27)
+ButtonsFrame.Parent = Holder
+
+local ButtonsLayout = Instance.new("UIListLayout")
+ButtonsLayout.FillDirection = Enum.FillDirection.Horizontal
+ButtonsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+ButtonsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+ButtonsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ButtonsLayout.Padding = UDim.new(0, 2)
+ButtonsLayout.Parent = ButtonsFrame
+
+local function CreateButton(Name : string)
 	local Button = Instance.new("TextButton")
-	Button.Name = Config.Name
-	Button.Size = Config.Size or UDim2.fromOffset(60, 28)
-	Button.Position = Config.Position or UDim2.new(0, 0, 0, 0)
-	Button.BackgroundColor3 = Config.BackgroundColor3 or CONFIG.Colors.Toolbar
-	Button.BorderSizePixel = Config.BorderSizePixel or 1
-	Button.BorderColor3 = Config.BorderColor3 or CONFIG.Colors.ButtonBorder
-	Button.Text = Config.Text or ""
-	Button.TextColor3 = CONFIG.Colors.Text
-	Button.TextSize = Config.TextSize or 11
-	Button.Font = Enum.Font.GothamMedium
-	Button.AutoButtonColor = Config.AutoButtonColor ~= false
-	Button.Parent = Parent
+	Button.Name = Name
+	Button.BackgroundColor3 = BackgroundColor
+	Button.BorderSizePixel = 0
+	Button.Size = UDim2.new(0.25, -1.5, 1, 0)
+	Button.Font = Enum.Font.SourceSans
+	Button.Text = Name
+	Button.TextColor3 = TextColor
+	Button.TextSize = 16
+	Button.AutoButtonColor = false
+	Button.Parent = ButtonsFrame
 
-	if Config.OnHover then
-		Button.MouseEnter:Connect(function()
-			Button.BackgroundColor3 = CONFIG.Colors.Hover
-			PlaySound(CONFIG.Sounds.Hover, 0.12)
-		end)
-		Button.MouseLeave:Connect(function()
-			Button.BackgroundColor3 = Config.BackgroundColor3 or CONFIG.Colors.Toolbar
-		end)
-	end
+	Button.MouseEnter:Connect(function()
+		Button.BackgroundColor3 = HoverColor
+	end)
 
-	if Config.OnClick then
-		Button.MouseButton1Click:Connect(function()
-			PlaySound(CONFIG.Sounds.Click, 0.25)
-			Config.OnClick()
-		end)
-	end
+	Button.MouseLeave:Connect(function()
+		Button.BackgroundColor3 = BackgroundColor
+	end)
 
 	return Button
 end
 
-local function CreateCorner(Object, Radius)
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, Radius)
-	Corner.Parent = Object
-	return Corner
+local ClearButton = CreateButton("Clear")
+local ExecuteButton = CreateButton("Execute")
+local SaveButton = CreateButton("Save")
+local LoadButton = CreateButton("Load")
+
+-----/Context Menu/-----
+local ContextMenu = Instance.new("Frame")
+ContextMenu.Name = "ContextMenu"
+ContextMenu.Visible = false
+ContextMenu.BackgroundColor3 = DarkColor
+ContextMenu.BorderSizePixel = 0
+ContextMenu.Size = UDim2.new(0, 100, 0, 44)
+ContextMenu.ZIndex = 20
+ContextMenu.Parent = ScreenGui
+
+local RenameButton = Instance.new("TextButton")
+RenameButton.Name = "Rename"
+RenameButton.BackgroundColor3 = DarkColor
+RenameButton.BorderSizePixel = 0
+RenameButton.Size = UDim2.new(1, 0, 0, 22)
+RenameButton.Font = Enum.Font.SourceSans
+RenameButton.Text = "Rename"
+RenameButton.TextColor3 = TextColor
+RenameButton.TextSize = 15
+RenameButton.AutoButtonColor = false
+RenameButton.ZIndex = 21
+RenameButton.Parent = ContextMenu
+
+local DeleteButton = Instance.new("TextButton")
+DeleteButton.Name = "Delete"
+DeleteButton.BackgroundColor3 = DarkColor
+DeleteButton.BorderSizePixel = 0
+DeleteButton.Position = UDim2.new(0, 0, 0, 22)
+DeleteButton.Size = UDim2.new(1, 0, 0, 22)
+DeleteButton.Font = Enum.Font.SourceSans
+DeleteButton.Text = "Delete"
+DeleteButton.TextColor3 = TextColor
+DeleteButton.TextSize = 15
+DeleteButton.AutoButtonColor = false
+DeleteButton.ZIndex = 21
+DeleteButton.Parent = ContextMenu
+
+-----/Rename Window/-----
+local RenameFrame = Instance.new("Frame")
+RenameFrame.Name = "RenameFrame"
+RenameFrame.Visible = false
+RenameFrame.BackgroundColor3 = DarkColor
+RenameFrame.BorderSizePixel = 0
+RenameFrame.Position = UDim2.new(0.5, -100, 0.5, -30)
+RenameFrame.Size = UDim2.new(0, 200, 0, 60)
+RenameFrame.ZIndex = 30
+RenameFrame.Parent = ScreenGui
+
+local RenameBox = Instance.new("TextBox")
+RenameBox.Name = "Name"
+RenameBox.BackgroundColor3 = BackgroundColor
+RenameBox.BorderSizePixel = 0
+RenameBox.Position = UDim2.new(0, 4, 0, 4)
+RenameBox.Size = UDim2.new(1, -8, 0, 24)
+RenameBox.Font = Enum.Font.SourceSans
+RenameBox.PlaceholderText = "Script name"
+RenameBox.Text = ""
+RenameBox.TextColor3 = TextColor
+RenameBox.TextSize = 15
+RenameBox.ClearTextOnFocus = false
+RenameBox.ZIndex = 31
+RenameBox.Parent = RenameFrame
+
+local RenameConfirm = Instance.new("TextButton")
+RenameConfirm.Name = "Confirm"
+RenameConfirm.BackgroundColor3 = BackgroundColor
+RenameConfirm.BorderSizePixel = 0
+RenameConfirm.Position = UDim2.new(0, 4, 0, 32)
+RenameConfirm.Size = UDim2.new(1, -8, 0, 23)
+RenameConfirm.Font = Enum.Font.SourceSans
+RenameConfirm.Text = "Rename"
+RenameConfirm.TextColor3 = TextColor
+RenameConfirm.TextSize = 15
+RenameConfirm.AutoButtonColor = false
+RenameConfirm.ZIndex = 31
+RenameConfirm.Parent = RenameFrame
+
+-----/Functions/-----
+local function UpdateCanvas()
+	ScriptsList.CanvasSize = UDim2.new(0, 0, 0, ScriptsLayout.AbsoluteContentSize.Y + 3)
 end
 
------/Main GUI/-----
-local Gui = Instance.new("ScreenGui")
-Gui.Name = "JoyExecutor"
-Gui.ResetOnSpawn = false
-Gui.IgnoreGuiInset = true
-Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Gui.Parent = PlayerGui
+local function SelectScript(Index : number)
+	local Data = SavedScripts[Index]
 
-local Main = Instance.new("CanvasGroup")
-Main.Name = "Window"
-Main.Size = UDim2.fromOffset(CONFIG.WindowSize.X, CONFIG.WindowSize.Y)
-Main.Position = UDim2.new(0.5, -CONFIG.WindowSize.X / 2, 0.5, -CONFIG.WindowSize.Y / 2)
-Main.BackgroundColor3 = CONFIG.Colors.Window
-Main.BorderSizePixel = 1
-Main.BorderColor3 = CONFIG.Colors.Border
-Main.GroupTransparency = 0
-Main.Parent = Gui
-
-CreateCorner(Main, 8)
-
------/TitleBar/-----
-local TitleBar = Instance.new("CanvasGroup")
-TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
-TitleBar.BackgroundColor3 = CONFIG.Colors.TitleBar
-TitleBar.BorderSizePixel = 0
-TitleBar.Parent = Main
-
-local Icon = Instance.new("ImageLabel")
-Icon.Name = "Icon"
-Icon.Size = UDim2.fromOffset(24, 24)
-Icon.Position = UDim2.fromOffset(12, 8)
-Icon.BackgroundTransparency = 1
-Icon.Image = "4791153196"
-Icon.ScaleType = Enum.ScaleType.Fit
-Icon.Parent = TitleBar
-
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(1, -150, 0, 40)
-Title.Position = UDim2.fromOffset(45, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "Joy Executor"
-Title.TextColor3 = CONFIG.Colors.TextLight
-Title.TextSize = 16
-Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.TextYAlignment = Enum.TextYAlignment.Center
-Title.Parent = TitleBar
-
-local WindowButtons = {
-	Minimize = CreateButton(TitleBar, {
-		Name = "Minimize",
-		Text = "−",
-		Position = UDim2.new(1, -120, 0, 5),
-		Size = UDim2.fromOffset(45, 30),
-		BackgroundColor3 = CONFIG.Colors.TitleBar,
-		BorderSizePixel = 0,
-		TextSize = 18,
-		OnHover = true,
-	}),
-	Maximize = CreateButton(TitleBar, {
-		Name = "Maximize",
-		Text = "□",
-		Position = UDim2.new(1, -75, 0, 5),
-		Size = UDim2.fromOffset(45, 30),
-		BackgroundColor3 = CONFIG.Colors.TitleBar,
-		BorderSizePixel = 0,
-		TextSize = 14,
-		OnHover = true,
-	}),
-	Close = CreateButton(TitleBar, {
-		Name = "Close",
-		Text = "×",
-		Position = UDim2.new(1, -30, 0, 5),
-		Size = UDim2.fromOffset(45, 30),
-		BackgroundColor3 = CONFIG.Colors.TitleBar,
-		BorderSizePixel = 0,
-		TextSize = 18,
-		OnHover = true,
-	}),
-}
-
------/MenuBar/-----
-local MenuBar = Instance.new("CanvasGroup")
-MenuBar.Name = "MenuBar"
-MenuBar.Size = UDim2.new(1, 0, 0, 28)
-MenuBar.Position = UDim2.fromOffset(0, 40)
-MenuBar.BackgroundColor3 = CONFIG.Colors.MenuBar
-MenuBar.BorderSizePixel = 0
-MenuBar.Parent = Main
-
-local MenuItems = {
-	{Name = "File", Text = "File", X = 8},
-	{Name = "Edit", Text = "Edit", X = 60},
-	{Name = "View", Text = "View", X = 110},
-	{Name = "Tools", Text = "Tools", X = 160},
-	{Name = "Help", Text = "Help", X = 220},
-}
-
-for _, Item in ipairs(MenuItems) do
-	CreateButton(MenuBar, {
-		Name = Item.Name,
-		Text = Item.Text,
-		Position = UDim2.fromOffset(Item.X, 4),
-		Size = UDim2.fromOffset(45, 20),
-		BackgroundColor3 = CONFIG.Colors.MenuBar,
-		BorderSizePixel = 0,
-		TextSize = 11,
-		OnHover = true,
-		OnClick = function() end,
-	})
-end
-
------/ToolBar/-----
-local ToolBar = Instance.new("CanvasGroup")
-ToolBar.Name = "ToolBar"
-ToolBar.Size = UDim2.new(1, 0, 0, 40)
-ToolBar.Position = UDim2.fromOffset(0, 68)
-ToolBar.BackgroundColor3 = CONFIG.Colors.Toolbar
-ToolBar.BorderSizePixel = 1
-ToolBar.BorderColor3 = CONFIG.Colors.Border
-ToolBar.Parent = Main
-
-local ToolButtons = {
-	New = nil,
-	Open = nil,
-	Save = nil,
-	Run = nil,
-	Clear = nil,
-}
-
-local ToolPositions = {
-	{Name = "New", X = 8},
-	{Name = "Open", X = 70},
-	{Name = "Save", X = 132},
-	{Name = "Run", X = 200},
-	{Name = "Clear", X = 262},
-}
-
-for _, Pos in ipairs(ToolPositions) do
-	ToolButtons[Pos.Name] = CreateButton(ToolBar, {
-		Name = Pos.Name,
-		Text = Pos.Name,
-		Position = UDim2.fromOffset(Pos.X, 6),
-		Size = UDim2.fromOffset(55, 28),
-		BackgroundColor3 = CONFIG.Colors.Active,
-		BorderSizePixel = 1,
-		TextSize = 10,
-		TextColor = CONFIG.Colors.TextLight,
-		OnHover = true,
-		OnClick = function() end,
-	})
-end
-
------/Editor/-----
-local EditorFrame = Instance.new("CanvasGroup")
-EditorFrame.Name = "Editor"
-EditorFrame.Size = UDim2.new(1, -16, 1, -130)
-EditorFrame.Position = UDim2.fromOffset(8, 112)
-EditorFrame.BackgroundColor3 = CONFIG.Colors.Editor
-EditorFrame.BorderSizePixel = 1
-EditorFrame.BorderColor3 = CONFIG.Colors.EditorBorder
-EditorFrame.ClipsDescendants = true
-EditorFrame.Parent = Main
-
-CreateCorner(EditorFrame, 4)
-
-local LineNumbers = Instance.new("TextLabel")
-LineNumbers.Name = "LineNumbers"
-LineNumbers.Size = UDim2.new(0, 40, 1, 0)
-LineNumbers.Position = UDim2.fromOffset(0, 0)
-LineNumbers.BackgroundColor3 = CONFIG.Colors.LineNumbers
-LineNumbers.BorderSizePixel = 0
-LineNumbers.Text = "1"
-LineNumbers.TextColor3 = CONFIG.Colors.TextTertiary
-LineNumbers.TextSize = 11
-LineNumbers.Font = Enum.Font.Code
-LineNumbers.TextXAlignment = Enum.TextXAlignment.Center
-LineNumbers.TextYAlignment = Enum.TextYAlignment.Top
-LineNumbers.Parent = EditorFrame
-
-local Code = Instance.new("TextBox")
-Code.Name = "Code"
-Code.Size = UDim2.new(1, -48, 1, 0)
-Code.Position = UDim2.fromOffset(40, 0)
-Code.BackgroundTransparency = 1
-Code.BorderSizePixel = 0
-Code.ClearTextOnFocus = false
-Code.MultiLine = true
-Code.TextWrapped = false
-Code.TextScaled = false
-Code.Text = "-- Joy Executor\n-- Write your Lua code here\n\nprint(\"Hello, World!\")"
-Code.TextColor3 = CONFIG.Colors.Text
-Code.TextSize = 12
-Code.Font = Enum.Font.Code
-Code.TextXAlignment = Enum.TextXAlignment.Left
-Code.TextYAlignment = Enum.TextYAlignment.Top
-Code.Parent = EditorFrame
-
------/StatusBar/-----
-local StatusBar = Instance.new("CanvasGroup")
-StatusBar.Name = "StatusBar"
-StatusBar.Size = UDim2.new(1, 0, 0, 30)
-StatusBar.Position = UDim2.new(0, 0, 1, -30)
-StatusBar.BackgroundColor3 = CONFIG.Colors.StatusBar
-StatusBar.BorderSizePixel = 1
-StatusBar.BorderColor3 = CONFIG.Colors.Border
-StatusBar.Parent = Main
-
-local Status = Instance.new("TextLabel")
-Status.Name = "Status"
-Status.Size = UDim2.fromOffset(300, 30)
-Status.Position = UDim2.fromOffset(8, 0)
-Status.BackgroundTransparency = 1
-Status.Text = "Ready"
-Status.TextColor3 = CONFIG.Colors.TextSecondary
-Status.TextSize = 10
-Status.Font = Enum.Font.GothamMedium
-Status.TextXAlignment = Enum.TextXAlignment.Left
-Status.TextYAlignment = Enum.TextYAlignment.Center
-Status.Parent = StatusBar
-
-local Position = Instance.new("TextLabel")
-Position.Name = "Position"
-Position.Size = UDim2.fromOffset(150, 30)
-Position.Position = UDim2.new(1, -158, 0, 0)
-Position.BackgroundTransparency = 1
-Position.Text = "Ln 1, Col 1"
-Position.TextColor3 = CONFIG.Colors.TextSecondary
-Position.TextSize = 10
-Position.Font = Enum.Font.GothamMedium
-Position.TextXAlignment = Enum.TextXAlignment.Right
-Position.TextYAlignment = Enum.TextYAlignment.Center
-Position.Parent = StatusBar
-
------/Core Functions/-----
-local function UpdateLines()
-	local Text = Code.Text or ""
-	Text = Text:gsub("\r\n", "\n")
-	Text = Text:gsub("\r", "\n")
-
-	local LineCount = 1
-	for _ in Text:gmatch("\n") do
-		LineCount += 1
-	end
-
-	local Lines = table.create(LineCount)
-	for Index = 1, LineCount do
-		Lines[Index] = tostring(Index)
-	end
-
-	LineNumbers.Text = table.concat(Lines, "\n")
-end
-
-local function UpdateCursorPosition()
-	local CursorPosition = Code.CursorPosition
-	if CursorPosition <= 0 then
-		Position.Text = "Ln 1, Col 1"
+	if not Data then
 		return
 	end
 
-	local TextBefore = Code.Text:sub(1, CursorPosition - 1)
-	local Line = 1
-	local LastNewLine = 0
+	SelectedScript = Index
+	CodeBox.Text = Data.Source
 
-	for Index = 1, #TextBefore do
-		if TextBefore:sub(Index, Index) == "\n" then
-			Line += 1
-			LastNewLine = Index
+	for _, Object in ipairs(ScriptsList:GetChildren()) do
+		if Object:IsA("TextButton") then
+			Object.BackgroundColor3 = BackgroundColor
 		end
 	end
 
-	local Column = #TextBefore - LastNewLine + 1
-	Position.Text = string.format("Ln %d, Col %d", Line, Column)
+	local Button = ScriptsList:FindFirstChild("Script_" .. Index)
+
+	if Button then
+		Button.BackgroundColor3 = SelectedColor
+	end
 end
 
------/Editor Events/-----
-Code:GetPropertyChangedSignal("Text"):Connect(UpdateLines)
-Code:GetPropertyChangedSignal("CursorPosition"):Connect(UpdateCursorPosition)
-Code.Focused:Connect(UpdateCursorPosition)
-Code.FocusLost:Connect(UpdateCursorPosition)
-
-UpdateLines()
-UpdateCursorPosition()
-
------/Button Events/-----
-ToolButtons.Clear.MouseButton1Click:Connect(function()
-	Code.Text = ""
-	Status.Text = "Editor cleared"
-	UpdateLines()
-	UpdateCursorPosition()
-end)
-
-ToolButtons.New.MouseButton1Click:Connect(function()
-	Code.Text = ""
-	Status.Text = "New document"
-	UpdateLines()
-	UpdateCursorPosition()
-end)
-
-ToolButtons.Open.MouseButton1Click:Connect(function()
-	Status.Text = "Open is unavailable"
-	PlaySound(CONFIG.Sounds.Error, 0.35)
-end)
-
-ToolButtons.Save.MouseButton1Click:Connect(function()
-	Status.Text = "Saved"
-end)
-
-ToolButtons.Run.MouseButton1Click:Connect(function()
-	local Success, Error = pcall(function()
-		loadstring(Code.Text)()
-	end)
-
-	if Success then
-		Status.Text = "Code executed successfully"
-	else
-		Status.Text = "Error: " .. (Error or "Unknown error")
-		PlaySound(CONFIG.Sounds.Error, 0.35)
+local function RefreshScripts()
+	for _, Object in ipairs(ScriptsList:GetChildren()) do
+		if Object:IsA("TextButton") then
+			Object:Destroy()
+		end
 	end
 
-	PlaySound(CONFIG.Sounds.Click, 0.25)
-end)
+	for Index, Data in ipairs(SavedScripts) do
+		local Button = Instance.new("TextButton")
+		Button.Name = "Script_" .. Index
+		Button.BackgroundColor3 = Index == SelectedScript and SelectedColor or BackgroundColor
+		Button.BorderSizePixel = 0
+		Button.Size = UDim2.new(1, -2, 0, 24)
+		Button.Font = Enum.Font.SourceSans
+		Button.Text = Data.Name
+		Button.TextColor3 = TextColor
+		Button.TextSize = 15
+		Button.TextXAlignment = Enum.TextXAlignment.Left
+		Button.AutoButtonColor = false
+		Button.LayoutOrder = Index
+		Button.Parent = ScriptsList
 
------/Window Controls/-----
-local Minimized = false
-local OldSize = Main.Size
+		local Padding = Instance.new("UIPadding")
+		Padding.PaddingLeft = UDim.new(0, 4)
+		Padding.Parent = Button
 
-WindowButtons.Minimize.MouseButton1Click:Connect(function()
-	Minimized = not Minimized
-
-	if Minimized then
-		OldSize = Main.Size
-		Main.Size = UDim2.fromOffset(CONFIG.WindowSize.X, 40)
-
-		for _, Object in ipairs(Main:GetChildren()) do
-			if Object ~= TitleBar then
-				Object.Visible = false
+		Button.MouseEnter:Connect(function()
+			if SelectedScript ~= Index then
+				Button.BackgroundColor3 = HoverColor
 			end
-		end
+		end)
 
-		Status.Text = "Minimized"
-	else
-		Main.Size = OldSize
+		Button.MouseLeave:Connect(function()
+			if SelectedScript ~= Index then
+				Button.BackgroundColor3 = BackgroundColor
+			end
+		end)
 
-		for _, Object in ipairs(Main:GetChildren()) do
-			Object.Visible = true
-		end
+		Button.MouseButton1Click:Connect(function()
+			ContextMenu.Visible = false
+			ContextScript = nil
+			SelectScript(Index)
+		end)
 
-		Status.Text = "Ready"
+		Button.MouseButton2Click:Connect(function()
+			ContextScript = Index
+			SelectedScript = Index
+
+			CodeBox.Text = Data.Source
+
+			ContextMenu.Position = UDim2.new(
+				0,
+				Button.AbsolutePosition.X + Button.AbsoluteSize.X + 3,
+				0,
+				Button.AbsolutePosition.Y
+			)
+
+			ContextMenu.Visible = true
+
+			RefreshScripts()
+		end)
+	end
+
+	UpdateCanvas()
+end
+
+local function SaveScript()
+	if CodeBox.Text == "" then
+		return
+	end
+
+	local Index = #SavedScripts + 1
+
+	SavedScripts[Index] = {
+		Name = "Script " .. Index,
+		Source = CodeBox.Text
+	}
+
+	SelectedScript = Index
+	ContextScript = nil
+
+	RefreshScripts()
+end
+
+local function LoadScript()
+	if not SelectedScript then
+		return
+	end
+
+	local Data = SavedScripts[SelectedScript]
+
+	if not Data then
+		return
+	end
+
+	CodeBox.Text = Data.Source
+end
+
+local function DeleteScript()
+	if not ContextScript then
+		return
+	end
+
+	local Index = ContextScript
+	local Data = SavedScripts[Index]
+
+	if not Data then
+		ContextScript = nil
+		ContextMenu.Visible = false
+		return
+	end
+
+	local Name = Data.Name
+
+	table.remove(SavedScripts, Index)
+
+	if SelectedScript == Index then
+		SelectedScript = nil
+		CodeBox.Text = ""
+	elseif SelectedScript and SelectedScript > Index then
+		SelectedScript -= 1
+	end
+
+	ContextScript = nil
+	ContextMenu.Visible = false
+
+	RefreshScripts()
+end
+
+local function OpenRename()
+	local Index = ContextScript or SelectedScript
+
+	if not Index then
+		return
+	end
+
+	local Data = SavedScripts[Index]
+
+	if not Data then
+		return
+	end
+
+	SelectedScript = Index
+	ContextScript = Index
+
+	ContextMenu.Visible = false
+
+	RenameBox.Text = Data.Name
+	RenameFrame.Visible = true
+	RenameBox:CaptureFocus()
+	RenameBox.CursorPosition = #RenameBox.Text + 1
+end
+
+local function RenameScript()
+	local Index = ContextScript or SelectedScript
+
+	if not Index then
+		RenameFrame.Visible = false
+		return
+	end
+
+	local Data = SavedScripts[Index]
+
+	if not Data then
+		RenameFrame.Visible = false
+		return
+	end
+
+	if RenameBox.Text == "" then
+		return
+	end
+
+	Data.Name = RenameBox.Text
+
+	SelectedScript = Index
+	ContextScript = nil
+	RenameFrame.Visible = false
+
+	RefreshScripts()
+end
+
+-----/Buttons/-----
+ClearButton.MouseButton1Click:Connect(function()
+	CodeBox.Text = ""
+	SelectedScript = nil
+	ContextScript = nil
+	ContextMenu.Visible = false
+
+	RefreshScripts()
+end)
+
+ExecuteButton.MouseButton1Click:Connect(function()
+	if CodeBox.Text == "" then
+		
+		return
+	end
+
+	loadstring(CodeBox.Text)()
+end)
+
+SaveButton.MouseButton1Click:Connect(function()
+	SaveScript()
+end)
+
+LoadButton.MouseButton1Click:Connect(function()
+	LoadScript()
+end)
+
+CloseButton.MouseEnter:Connect(function()
+	CloseImage.ImageColor3 = Color3.fromRGB(220, 220, 220)
+end)
+
+CloseButton.MouseLeave:Connect(function()
+	CloseImage.ImageColor3 = TextColor
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
+end)
+
+RenameButton.MouseEnter:Connect(function()
+	RenameButton.BackgroundColor3 = HoverColor
+end)
+
+RenameButton.MouseLeave:Connect(function()
+	RenameButton.BackgroundColor3 = DarkColor
+end)
+
+DeleteButton.MouseEnter:Connect(function()
+	DeleteButton.BackgroundColor3 = HoverColor
+end)
+
+DeleteButton.MouseLeave:Connect(function()
+	DeleteButton.BackgroundColor3 = DarkColor
+end)
+
+RenameButton.MouseButton1Click:Connect(function()
+	OpenRename()
+end)
+
+DeleteButton.MouseButton1Click:Connect(function()
+	DeleteScript()
+end)
+
+RenameConfirm.MouseButton1Click:Connect(function()
+	RenameScript()
+end)
+
+RenameBox.FocusLost:Connect(function(EnterPressed)
+	if EnterPressed then
+		RenameScript()
 	end
 end)
 
-local Maximized = false
-local OldPosition = Main.Position
+-----/Input/-----
+UserInputService.InputBegan:Connect(function(Input)
+	if Input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+		return
+	end
 
-WindowButtons.Maximize.MouseButton1Click:Connect(function()
-	if Maximized then
-		Main.Size = UDim2.fromOffset(CONFIG.WindowSize.X, CONFIG.WindowSize.Y)
-		Main.Position = OldPosition
-		Maximized = false
-		Status.Text = "Window restored"
-	else
-		OldPosition = Main.Position
-		Main.Position = UDim2.fromOffset(0, 0)
-		Main.Size = UDim2.fromScale(1, 1)
-		Maximized = true
-		Status.Text = "Maximized"
+	if not ContextMenu.Visible then
+		return
+	end
+
+	local MousePosition = Input.Position
+	local MenuPosition = ContextMenu.AbsolutePosition
+	local MenuSize = ContextMenu.AbsoluteSize
+
+	local InsideMenu =
+		MousePosition.X >= MenuPosition.X
+		and MousePosition.X <= MenuPosition.X + MenuSize.X
+		and MousePosition.Y >= MenuPosition.Y
+		and MousePosition.Y <= MenuPosition.Y + MenuSize.Y
+
+	if not InsideMenu then
+		ContextMenu.Visible = false
+		ContextScript = nil
 	end
 end)
 
-WindowButtons.Close.MouseButton1Click:Connect(function()
-	PlaySound(CONFIG.Sounds.Close, 0.35)
-	task.wait(0.05)
-	Gui:Destroy()
-end)
-
------/Window Drag/-----
-local Dragging = false
-local DragStart
-local StartPosition
-
-TitleBar.InputBegan:Connect(function(Input)
+-----/Dragging/-----
+Title.InputBegan:Connect(function(Input)
 	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 		Dragging = true
 		DragStart = Input.Position
-		StartPosition = Main.Position
+		StartPosition = Holder.Position
 	end
 end)
 
-TitleBar.InputEnded:Connect(function(Input)
+Title.InputEnded:Connect(function(Input)
 	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 		Dragging = false
 	end
 end)
 
 UserInputService.InputChanged:Connect(function(Input)
-	if not Dragging or Input.UserInputType ~= Enum.UserInputType.MouseMovement or Maximized then
+	if not Dragging then
+		return
+	end
+
+	if Input.UserInputType ~= Enum.UserInputType.MouseMovement then
 		return
 	end
 
 	local Delta = Input.Position - DragStart
-	Main.Position = UDim2.new(
+
+	Holder.Position = UDim2.new(
 		StartPosition.X.Scale,
 		StartPosition.X.Offset + Delta.X,
 		StartPosition.Y.Scale,
@@ -523,14 +604,8 @@ UserInputService.InputChanged:Connect(function(Input)
 	)
 end)
 
------/Initialization/-----
+-----/Init/-----
+ScriptsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvas)
 
-Main.GroupTransparency = 1
-PlaySound(CONFIG.Sounds.Open, 0.3)
-
-for Index = 1, 10 do
-	Main.GroupTransparency = 1 - (Index / 10)
-	task.wait(0.015)
-end
-
-Main.GroupTransparency = 0
+UpdateCanvas()
+RefreshScripts()
