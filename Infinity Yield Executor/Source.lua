@@ -39,7 +39,7 @@ local CommentColor = Color3.fromRGB(106, 111, 129)
 local BoolColor = Color3.fromRGB(242, 186, 42)
 local NilColor = Color3.fromRGB(242, 186, 42)
 local SelfColor = Color3.fromRGB(235, 121, 115)
-local GlobalColor = Color3.fromRGB(78, 201, 176)
+local GlobalColor = Color3.fromRGB(112, 160, 255)
 local TypeColor = Color3.fromRGB(78, 201, 176)
 local BuiltInFunctionColor = Color3.fromRGB(220, 220, 170)
 local BracketColor = Color3.fromRGB(188, 190, 200)
@@ -389,8 +389,7 @@ local KeywordList = {
 	["continue"] = true,
 	["and"] = true,
 	["or"] = true,
-	["not"] = true,
-	["game"] = true
+	["not"] = true
 }
 
 local LuauKeywordList = {
@@ -412,6 +411,7 @@ local SelfList = {
 }
 
 local GlobalList = {
+	["game"] = true,
 	["workspace"] = true,
 	["script"] = true,
 	["Instance"] = true,
