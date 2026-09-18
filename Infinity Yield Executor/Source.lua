@@ -253,7 +253,7 @@ local function CreateButton(Name : string)
 	Button.TextSize = 16
 	Button.AutoButtonColor = false
 	Button.TextColor3 = TextColor
-	Button.BackgroundColor3 = BackgroundColor
+	Button.BackgroundColor3 = ScrollColor
 	Button.Font = Enum.Font.SourceSans
 	Button.Size = UDim2.new(0.25, -1, 1, 0)
 	Button.Text = Name
@@ -264,7 +264,7 @@ local function CreateButton(Name : string)
 	end)
 
 	Button.MouseLeave:Connect(function()
-		Button.BackgroundColor3 = BackgroundColor
+		Button.BackgroundColor3 = ScrollColor
 	end)
 
 	return Button
@@ -281,7 +281,7 @@ ContextMenu.Name = "ContextMenu"
 ContextMenu.Visible = false
 ContextMenu.ZIndex = 20
 ContextMenu.BorderSizePixel = 0
-ContextMenu.BackgroundColor3 = DarkColor
+ContextMenu.BackgroundColor3 = SelectedColor
 ContextMenu.Size = UDim2.new(0, 100, 0, 44)
 ContextMenu.Parent = ScreenGui
 
@@ -291,7 +291,7 @@ RenameButton.BorderSizePixel = 0
 RenameButton.TextSize = 15
 RenameButton.AutoButtonColor = false
 RenameButton.TextColor3 = TextColor
-RenameButton.BackgroundColor3 = DarkColor
+RenameButton.BackgroundColor3 = SelectedColor
 RenameButton.Font = Enum.Font.SourceSans
 RenameButton.ZIndex = 21
 RenameButton.Size = UDim2.new(1, 0, 0, 22)
@@ -304,7 +304,7 @@ DeleteButton.BorderSizePixel = 0
 DeleteButton.TextSize = 15
 DeleteButton.AutoButtonColor = false
 DeleteButton.TextColor3 = TextColor
-DeleteButton.BackgroundColor3 = DarkColor
+DeleteButton.BackgroundColor3 = SelectedColor
 DeleteButton.Font = Enum.Font.SourceSans
 DeleteButton.ZIndex = 21
 DeleteButton.Size = UDim2.new(1, 0, 0, 22)
@@ -318,7 +318,7 @@ RenameFrame.Name = "RenameFrame"
 RenameFrame.Visible = false
 RenameFrame.ZIndex = 30
 RenameFrame.BorderSizePixel = 0
-RenameFrame.BackgroundColor3 = DarkColor
+RenameFrame.BackgroundColor3 = BackgroundColor
 RenameFrame.Size = UDim2.new(0, 200, 0, 60)
 RenameFrame.Position = UDim2.new(0.5, -100, 0.5, -30)
 RenameFrame.Parent = ScreenGui
@@ -329,7 +329,7 @@ RenameBox.ZIndex = 31
 RenameBox.BorderSizePixel = 0
 RenameBox.TextSize = 15
 RenameBox.TextColor3 = TextColor
-RenameBox.BackgroundColor3 = BackgroundColor
+RenameBox.BackgroundColor3 = SelectedColor
 RenameBox.Font = Enum.Font.SourceSans
 RenameBox.ClearTextOnFocus = false
 RenameBox.PlaceholderText = "Script name"
@@ -344,7 +344,7 @@ RenameConfirm.BorderSizePixel = 0
 RenameConfirm.TextSize = 15
 RenameConfirm.AutoButtonColor = false
 RenameConfirm.TextColor3 = TextColor
-RenameConfirm.BackgroundColor3 = BackgroundColor
+RenameConfirm.BackgroundColor3 = SelectedColor
 RenameConfirm.Font = Enum.Font.SourceSans
 RenameConfirm.ZIndex = 31
 RenameConfirm.Size = UDim2.new(1, -8, 0, 23)
@@ -909,7 +909,7 @@ local function RefreshScripts()
 	for Index, Data in ipairs(SavedScripts) do
 		local Button = Instance.new("TextButton")
 		Button.Name = "Script_" .. Index
-		Button.BackgroundColor3 = Index == SelectedScript and SelectedColor or BackgroundColor
+		Button.BackgroundColor3 = Index == SelectedScript and SelectedColor or ScrollColor
 		Button.BorderSizePixel = 0
 		Button.Size = UDim2.new(1, -2, 0, 24)
 		Button.Font = Enum.Font.SourceSans
@@ -933,7 +933,7 @@ local function RefreshScripts()
 
 		Button.MouseLeave:Connect(function()
 			if SelectedScript ~= Index then
-				Button.BackgroundColor3 = BackgroundColor
+				Button.BackgroundColor3 = ScrollColor
 			end
 		end)
 
@@ -1123,7 +1123,7 @@ RenameButton.MouseEnter:Connect(function()
 end)
 
 RenameButton.MouseLeave:Connect(function()
-	RenameButton.BackgroundColor3 = DarkColor
+	RenameButton.BackgroundColor3 = SelectedColor
 end)
 
 DeleteButton.MouseEnter:Connect(function()
@@ -1131,7 +1131,7 @@ DeleteButton.MouseEnter:Connect(function()
 end)
 
 DeleteButton.MouseLeave:Connect(function()
-	DeleteButton.BackgroundColor3 = DarkColor
+	DeleteButton.BackgroundColor3 = SelectedColor
 end)
 
 RenameButton.MouseButton1Click:Connect(function()
