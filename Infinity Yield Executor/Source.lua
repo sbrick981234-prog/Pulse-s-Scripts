@@ -17,23 +17,33 @@ local StartPosition = nil
 local HighlightUpdating = false
 
 -----/Assets/-----
+-----/Assets/-----
 local BackgroundColor = Color3.fromRGB(47, 47, 48)
 local DarkColor = Color3.fromRGB(37, 37, 38)
 local HoverColor = Color3.fromRGB(53, 53, 54)
 local SelectedColor = Color3.fromRGB(61, 61, 62)
 local ScrollColor = Color3.fromRGB(79, 79, 80)
-local TextColor = Color3.fromRGB(255, 255, 255)
+
+local TextColor = Color3.fromRGB(220, 220, 220)
 local SecondaryColor = Color3.fromRGB(171, 171, 171)
 local LineColor = Color3.fromRGB(111, 111, 112)
-
-local KeywordColor = Color3.fromRGB(198, 120, 221)
-local StringColor = Color3.fromRGB(152, 195, 121)
-local NumberColor = Color3.fromRGB(209, 154, 102)
-local CommentColor = Color3.fromRGB(92, 99, 112)
-local GlobalColor = Color3.fromRGB(97, 175, 239)
-local FunctionColor = Color3.fromRGB(229, 192, 123)
-local BooleanColor = Color3.fromRGB(86, 182, 194)
-local OperatorColor = Color3.fromRGB(86, 182, 194)
+local KeywordColor = Color3.fromRGB(86, 156, 214)
+local LuauKeywordColor = Color3.fromRGB(86, 156, 214)
+local FunctionNameColor = Color3.fromRGB(220, 220, 170)
+local FunctionColor = Color3.fromRGB(220, 220, 170)
+local MethodColor = Color3.fromRGB(220, 220, 170)
+local PropertyColor = Color3.fromRGB(156, 220, 254)
+local NumberColor = Color3.fromRGB(181, 206, 168)
+local StringColor = Color3.fromRGB(206, 145, 120)
+local CommentColor = Color3.fromRGB(106, 153, 85)
+local BoolColor = Color3.fromRGB(174, 129, 255)
+local NilColor = Color3.fromRGB(174, 129, 255)
+local SelfColor = Color3.fromRGB(86, 156, 214)
+local GlobalColor = Color3.fromRGB(78, 201, 176)
+local TypeColor = Color3.fromRGB(78, 201, 176)
+local BuiltInFunctionColor = Color3.fromRGB(220, 220, 170)
+local BracketColor = Color3.fromRGB(212, 212, 212)
+local OperatorColor = Color3.fromRGB(212, 212, 212)
 
 -----/Main/-----
 local ScreenGui = Instance.new("ScreenGui")
@@ -146,6 +156,7 @@ Lines.BackgroundColor3 = DarkColor
 Lines.Size = UDim2.new(0, 20, 1, 0)
 Lines.ScrollBarThickness = 0
 Lines.ClipsDescendants = true
+Lines.ZIndex = 2
 Lines.Parent = CodeFrame
 
 local LinesText = Instance.new("TextLabel")
@@ -160,6 +171,7 @@ LinesText.BackgroundTransparency = 1
 LinesText.Size = UDim2.new(1, 0, 0, 191)
 LinesText.Text = "1"
 LinesText.Position = UDim2.new(0, 0, 0, 4)
+LinesText.ZIndex = 3
 LinesText.Parent = Lines
 
 local LinesPadding = Instance.new("UIPadding")
@@ -178,10 +190,11 @@ CodeScroll.ScrollBarThickness = 6
 CodeScroll.BackgroundTransparency = 1
 CodeScroll.ScrollingDirection = Enum.ScrollingDirection.XY
 CodeScroll.ClipsDescendants = true
+CodeScroll.ZIndex = 2
 CodeScroll.Parent = CodeFrame
 
 local HighlightBox = Instance.new("TextLabel")
-HighlightBox.Name = "SyntaxHighlight"
+HighlightBox.Name = "Text"
 HighlightBox.BorderSizePixel = 0
 HighlightBox.BackgroundTransparency = 1
 HighlightBox.TextXAlignment = Enum.TextXAlignment.Left
@@ -193,17 +206,17 @@ HighlightBox.TextColor3 = TextColor
 HighlightBox.TextWrapped = false
 HighlightBox.Size = UDim2.new(1, -10, 0, 18)
 HighlightBox.Position = UDim2.new(0, 5, 0, 4)
-HighlightBox.ZIndex = 1
+HighlightBox.ZIndex = 3
 HighlightBox.Parent = CodeScroll
 
 local CodeBox = Instance.new("TextBox")
 CodeBox.Name = "CodeBox"
 CodeBox.TextXAlignment = Enum.TextXAlignment.Left
+CodeBox.TextYAlignment = Enum.TextYAlignment.Top
 CodeBox.PlaceholderColor3 = SecondaryColor
 CodeBox.BorderSizePixel = 0
 CodeBox.TextSize = 14
-CodeBox.TextColor3 = TextColor
-CodeBox.TextYAlignment = Enum.TextYAlignment.Top
+CodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 CodeBox.Font = Enum.Font.Code
 CodeBox.AutomaticSize = Enum.AutomaticSize.Y
 CodeBox.MultiLine = true
@@ -213,7 +226,7 @@ CodeBox.Size = UDim2.new(1, -10, 0, 18)
 CodeBox.Position = UDim2.new(0, 5, 0, 4)
 CodeBox.Text = ""
 CodeBox.BackgroundTransparency = 1
-CodeBox.ZIndex = 2
+CodeBox.ZIndex = 4
 CodeBox.Parent = CodeScroll
 
 -----/Buttons/-----
