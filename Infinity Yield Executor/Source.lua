@@ -1,6 +1,7 @@
 -----/Services/-----
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local TextService = game:GetService("TextService")
 
 -----/Variables/-----
 local Player = Players.LocalPlayer
@@ -208,6 +209,22 @@ HighlightBox.Size = UDim2.new(1, -10, 0, 18)
 HighlightBox.Position = UDim2.new(0, 5, 0, 4)
 HighlightBox.ZIndex = 3
 HighlightBox.Parent = CodeScroll
+
+local Caret = Instance.new("TextLabel")
+Caret.Name = "Caret"
+Caret.BorderSizePixel = 0
+Caret.BackgroundTransparency = 1
+Caret.Text = "|"
+Caret.TextColor3 = TextColor
+Caret.TextSize = 14
+Caret.Font = Enum.Font.Code
+Caret.TextXAlignment = Enum.TextXAlignment.Left
+Caret.TextYAlignment = Enum.TextYAlignment.Top
+Caret.Size = UDim2.new(0, 8, 0, 18)
+Caret.Position = UDim2.new(0, 5, 0, 4)
+Caret.ZIndex = 6
+Caret.Visible = false
+Caret.Parent = CodeScroll
 
 local CodeBox = Instance.new("TextBox")
 CodeBox.Name = "CodeBox"
@@ -874,6 +891,55 @@ local function UpdateCanvas()
 	)
 end
 
+local function GetCaretPosition(Text : string, CursorPosition : number)
+	local BeforeCursor = Text:sub(1, math.max(CursorPosition - 1, 0))
+	local LineNumber = 1
+	local LastNewLine = 0
+
+	for Index = 1, #BeforeCursor do
+		if BeforeCursor:sub(Index, Index) == "\n" then
+			LineNumber += 1
+			LastNewLine = Index
+		end
+	end
+
+	local CurrentLine = BeforeCursor:sub(LastNewLine + 1)
+
+	local TextSize = TextService:GetTextSize(
+		CurrentLine,
+		CodeBox.TextSize,
+		CodeBox.Font,
+		Vector2.new(10000, 10000)
+	)
+
+	return TextSize.X, (LineNumber - 1) * CodeBox.TextSize
+end
+
+local function UpdateCaret()
+	if not CodeBox:IsFocused() then
+		Caret.Visible = false
+		return
+	end
+
+	local CursorPosition = CodeBox.CursorPosition
+
+	if CursorPosition < 0 then
+		Caret.Visible = false
+		return
+	end
+
+	local X, Y = GetCaretPosition(CodeBox.Text, CursorPosition)
+
+	Caret.Position = UDim2.new(
+		0,
+		5 + X,
+		0,
+		4 + Y
+	)
+
+	Caret.Visible = true
+end
+
 local function SelectScript(Index : number)
 	local Data = SavedScripts[Index]
 
@@ -896,7 +962,10 @@ local function SelectScript(Index : number)
 		Button.BackgroundColor3 = SelectedColor
 	end
 
-	task.defer(UpdateLines)
+	task.defer(function()
+		UpdateLines()
+		UpdateCaret()
+	end)
 end
 
 local function RefreshScripts()
@@ -1214,7 +1283,28 @@ end)
 
 -----/Lines/-----
 CodeBox:GetPropertyChangedSignal("Text"):Connect(function()
+	if SelectedScript then
+		local Data = SavedScripts[SelectedScript]
+
+		if Data then
+			Data.Source = CodeBox.Text
+		end
+	end
+
 	UpdateLines()
+	UpdateCaret()
+end)
+
+CodeBox:GetPropertyChangedSignal("CursorPosition"):Connect(function()
+	UpdateCaret()
+end)
+
+CodeBox.Focused:Connect(function()
+	UpdateCaret()
+end)
+
+CodeBox.FocusLost:Connect(function()
+	Caret.Visible = false
 end)
 
 CodeBox:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
@@ -1223,10 +1313,25 @@ end)
 
 CodeScroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
 	UpdateScroll()
+	UpdateCaret()
 end)
 
 CodeScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 	UpdateLines()
+	UpdateCaret()
+end)
+
+-----/Caret/-----
+task.spawn(function()
+	while ScreenGui.Parent do
+		if CodeBox:IsFocused() then
+			Caret.Visible = not Caret.Visible
+			task.wait(0.5)
+		else
+			Caret.Visible = false
+			task.wait(0.1)
+		end
+	end
 end)
 
 -----/Init/-----
