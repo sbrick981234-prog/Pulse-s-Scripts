@@ -14,6 +14,8 @@ local Dragging = false
 local DragStart = nil
 local StartPosition = nil
 
+local HighlightUpdating = false
+
 -----/Assets/-----
 local BackgroundColor = Color3.fromRGB(47, 47, 48)
 local DarkColor = Color3.fromRGB(37, 37, 38)
@@ -23,6 +25,15 @@ local ScrollColor = Color3.fromRGB(79, 79, 80)
 local TextColor = Color3.fromRGB(255, 255, 255)
 local SecondaryColor = Color3.fromRGB(171, 171, 171)
 local LineColor = Color3.fromRGB(111, 111, 112)
+
+local KeywordColor = Color3.fromRGB(198, 120, 221)
+local StringColor = Color3.fromRGB(152, 195, 121)
+local NumberColor = Color3.fromRGB(209, 154, 102)
+local CommentColor = Color3.fromRGB(92, 99, 112)
+local GlobalColor = Color3.fromRGB(97, 175, 239)
+local FunctionColor = Color3.fromRGB(229, 192, 123)
+local BooleanColor = Color3.fromRGB(86, 182, 194)
+local OperatorColor = Color3.fromRGB(86, 182, 194)
 
 -----/Main/-----
 local ScreenGui = Instance.new("ScreenGui")
@@ -124,6 +135,7 @@ CodeFrame.Size = UDim2.new(1, -94, 0, 191)
 CodeFrame.Position = UDim2.new(0, 90, 0, 24)
 CodeFrame.Parent = Holder
 
+-----/Editor/-----
 local Lines = Instance.new("ScrollingFrame")
 Lines.Name = "Lines"
 Lines.Active = false
@@ -168,6 +180,22 @@ CodeScroll.ScrollingDirection = Enum.ScrollingDirection.XY
 CodeScroll.ClipsDescendants = true
 CodeScroll.Parent = CodeFrame
 
+local HighlightBox = Instance.new("TextLabel")
+HighlightBox.Name = "SyntaxHighlight"
+HighlightBox.BorderSizePixel = 0
+HighlightBox.BackgroundTransparency = 1
+HighlightBox.TextXAlignment = Enum.TextXAlignment.Left
+HighlightBox.TextYAlignment = Enum.TextYAlignment.Top
+HighlightBox.TextSize = 14
+HighlightBox.Font = Enum.Font.Code
+HighlightBox.RichText = true
+HighlightBox.TextColor3 = TextColor
+HighlightBox.TextWrapped = false
+HighlightBox.Size = UDim2.new(1, -10, 0, 18)
+HighlightBox.Position = UDim2.new(0, 5, 0, 4)
+HighlightBox.ZIndex = 1
+HighlightBox.Parent = CodeScroll
+
 local CodeBox = Instance.new("TextBox")
 CodeBox.Name = "CodeBox"
 CodeBox.TextXAlignment = Enum.TextXAlignment.Left
@@ -185,8 +213,10 @@ CodeBox.Size = UDim2.new(1, -10, 0, 18)
 CodeBox.Position = UDim2.new(0, 5, 0, 4)
 CodeBox.Text = ""
 CodeBox.BackgroundTransparency = 1
+CodeBox.ZIndex = 2
 CodeBox.Parent = CodeScroll
 
+-----/Buttons/-----
 local ButtonsFrame = Instance.new("Frame")
 ButtonsFrame.Name = "Buttons"
 ButtonsFrame.BorderSizePixel = 0
@@ -309,6 +339,91 @@ RenameConfirm.Position = UDim2.new(0, 4, 0, 32)
 RenameConfirm.Parent = RenameFrame
 
 -----/Functions/-----
+local function EscapeRichText(Text : string)
+	return Text
+		:gsub("&", "&amp;")
+		:gsub("<", "&lt;")
+		:gsub(">", "&gt;")
+		:gsub('"', "&quot;")
+end
+
+local function ToHex(Color : Color3)
+	return string.format(
+		"#%02X%02X%02X",
+		math.floor(Color.R * 255),
+		math.floor(Color.G * 255),
+		math.floor(Color.B * 255)
+	)
+end
+
+local KeywordList = {
+	["local"] = true,
+	["function"] = true,
+	["return"] = true,
+	["if"] = true,
+	["then"] = true,
+	["else"] = true,
+	["elseif"] = true,
+	["end"] = true,
+	["for"] = true,
+	["while"] = true,
+	["repeat"] = true,
+	["until"] = true,
+	["do"] = true,
+	["in"] = true,
+	["break"] = true,
+	["continue"] = true,
+	["and"] = true,
+	["or"] = true,
+	["not"] = true
+}
+
+local BooleanList = {
+	["true"] = true,
+	["false"] = true,
+	["nil"] = true
+}
+
+local GlobalList = {
+	["game"] = true,
+	["workspace"] = true,
+	["script"] = true,
+	["Instance"] = true,
+	["Color3"] = true,
+	["UDim2"] = true,
+	["UDim"] = true,
+	["Vector2"] = true,
+	["Vector3"] = true,
+	["CFrame"] = true,
+	["Enum"] = true,
+	["task"] = true,
+	["Players"] = true,
+	["math"] = true,
+	["string"] = true,
+	["table"] = true,
+	["coroutine"] = true,
+	["os"] = true,
+	["debug"] = true
+}
+
+local FunctionList = {
+	["print"] = true,
+	["warn"] = true,
+	["require"] = true,
+	["loadstring"] = true,
+	["typeof"] = true,
+	["tostring"] = true,
+	["tonumber"] = true,
+	["pairs"] = true,
+	["ipairs"] = true,
+	["next"] = true,
+	["select"] = true,
+	["pcall"] = true,
+	["xpcall"] = true,
+	["assert"] = true,
+	["error"] = true
+}
+
 local function GetLineCount(Text : string)
 	if Text == "" then
 		return 1
@@ -321,6 +436,151 @@ local function GetLineCount(Text : string)
 	end
 
 	return Count
+end
+
+local function HighlightSyntax(Source : string)
+	local Output = {}
+	local Position = 1
+	local Length = #Source
+
+	local KeywordHex = ToHex(KeywordColor)
+	local StringHex = ToHex(StringColor)
+	local NumberHex = ToHex(NumberColor)
+	local CommentHex = ToHex(CommentColor)
+	local GlobalHex = ToHex(GlobalColor)
+	local FunctionHex = ToHex(FunctionColor)
+	local BooleanHex = ToHex(BooleanColor)
+	local OperatorHex = ToHex(OperatorColor)
+
+	local function Add(Text : string, Color : string?)
+		Text = EscapeRichText(Text)
+
+		if Color then
+			table.insert(Output, '<font color="' .. Color .. '">' .. Text .. "</font>")
+		else
+			table.insert(Output, Text)
+		end
+	end
+
+	while Position <= Length do
+		local Character = Source:sub(Position, Position)
+		local NextCharacter = Source:sub(Position + 1, Position + 1)
+
+		if Character == "-" and NextCharacter == "-" then
+			local NewLine = Source:find("\n", Position, true)
+			local EndPosition = NewLine and NewLine - 1 or Length
+			local Comment = Source:sub(Position, EndPosition)
+
+			Add(Comment, CommentHex)
+			Position = EndPosition + 1
+
+		elseif Character == '"' or Character == "'" then
+			local Quote = Character
+			local Current = Position + 1
+
+			while Current <= Length do
+				local CurrentCharacter = Source:sub(Current, Current)
+
+				if CurrentCharacter == "\\" then
+					Current += 2
+				elseif CurrentCharacter == Quote then
+					Current += 1
+					break
+				else
+					Current += 1
+				end
+			end
+
+			Add(Source:sub(Position, Current - 1), StringHex)
+			Position = Current
+
+		elseif Character:match("%d") then
+			local Current = Position
+
+			while Current <= Length do
+				local NumberCharacter = Source:sub(Current, Current)
+
+				if not NumberCharacter:match("[%d%.]") then
+					break
+				end
+
+				Current += 1
+			end
+
+			Add(Source:sub(Position, Current - 1), NumberHex)
+			Position = Current
+
+		elseif Character:match("[%a_]") then
+			local Current = Position
+
+			while Current <= Length do
+				local IdentifierCharacter = Source:sub(Current, Current)
+
+				if not IdentifierCharacter:match("[%w_]") then
+					break
+				end
+
+				Current += 1
+			end
+
+			local Identifier = Source:sub(Position, Current - 1)
+			local Color = nil
+
+			if KeywordList[Identifier] then
+				Color = KeywordHex
+			elseif BooleanList[Identifier] then
+				Color = BooleanHex
+			elseif GlobalList[Identifier] then
+				Color = GlobalHex
+			elseif FunctionList[Identifier] then
+				Color = FunctionHex
+			elseif Source:sub(Current, Current) == "(" then
+				Color = FunctionHex
+			end
+
+			Add(Identifier, Color)
+			Position = Current
+
+		elseif Character == ":" and NextCharacter == ":" then
+			Add("::", OperatorHex)
+			Position += 2
+
+		elseif Character:match("[=<>~%+%-%*/%^%%]") then
+			Add(Character, OperatorHex)
+			Position += 1
+
+		else
+			Add(Character)
+			Position += 1
+		end
+	end
+
+	return table.concat(Output)
+end
+
+local function UpdateSyntaxHighlight()
+	if HighlightUpdating then
+		return
+	end
+
+	HighlightUpdating = true
+
+	local Source = CodeBox.Text
+
+	if Source == "" then
+		HighlightBox.Text = ""
+	else
+		HighlightBox.Text = HighlightSyntax(Source)
+	end
+
+	HighlightBox.Size = UDim2.new(
+		0,
+		math.max(CodeBox.AbsoluteSize.X, CodeScroll.AbsoluteSize.X - 10),
+		0,
+		math.max(CodeBox.AbsoluteSize.Y, 18)
+	)
+
+	HighlightUpdating = false
 end
 
 local function UpdateLines()
@@ -343,14 +603,28 @@ local function UpdateLines()
 		0,
 		Height
 	)
+
+	UpdateSyntaxHighlight()
 end
 
 local function UpdateScroll()
 	Lines.CanvasPosition = Vector2.new(0, CodeScroll.CanvasPosition.Y)
+
+	HighlightBox.Position = UDim2.new(
+		0,
+		5 - CodeScroll.CanvasPosition.X,
+		0,
+		4 - CodeScroll.CanvasPosition.Y
+	)
 end
 
 local function UpdateCanvas()
-	ScriptsList.CanvasSize = UDim2.new(0, 0, 0, ScriptsLayout.AbsoluteContentSize.Y + 3)
+	ScriptsList.CanvasSize = UDim2.new(
+		0,
+		0,
+		0,
+		ScriptsLayout.AbsoluteContentSize.Y + 3
+	)
 end
 
 local function SelectScript(Index : number)
