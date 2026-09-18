@@ -17,7 +17,6 @@ local StartPosition = nil
 local HighlightUpdating = false
 
 -----/Assets/-----
------/Assets/-----
 local BackgroundColor = Color3.fromRGB(47, 47, 48)
 local DarkColor = Color3.fromRGB(37, 37, 38)
 local HoverColor = Color3.fromRGB(53, 53, 54)
@@ -183,7 +182,7 @@ local CodeScroll = Instance.new("ScrollingFrame")
 CodeScroll.Name = "CodeScroll"
 CodeScroll.Active = true
 CodeScroll.BorderSizePixel = 0
-CodeScroll.CanvasSize = UDim2.new(0, 226, 0, 191)
+CodeScroll.CanvasSize = UDim2.new(0, 1000, 0, 191)
 CodeScroll.Size = UDim2.new(1, -20, 1, 0)
 CodeScroll.ScrollBarImageColor3 = ScrollColor
 CodeScroll.Position = UDim2.new(0, 20, 0, 0)
