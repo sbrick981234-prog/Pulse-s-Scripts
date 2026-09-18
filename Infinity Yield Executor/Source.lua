@@ -389,7 +389,8 @@ local KeywordList = {
 	["continue"] = true,
 	["and"] = true,
 	["or"] = true,
-	["not"] = true
+	["not"] = true,
+	["game"] = true
 }
 
 local LuauKeywordList = {
@@ -411,7 +412,6 @@ local SelfList = {
 }
 
 local GlobalList = {
-	["game"] = true,
 	["workspace"] = true,
 	["script"] = true,
 	["Instance"] = true,
