@@ -27,23 +27,24 @@ local ScrollColor = Color3.fromRGB(79, 79, 80)
 local TextColor = Color3.fromRGB(220, 220, 220)
 local SecondaryColor = Color3.fromRGB(171, 171, 171)
 local LineColor = Color3.fromRGB(111, 111, 112)
-local KeywordColor = Color3.fromRGB(86, 156, 214)
-local LuauKeywordColor = Color3.fromRGB(86, 156, 214)
-local FunctionNameColor = Color3.fromRGB(220, 220, 170)
-local FunctionColor = Color3.fromRGB(220, 220, 170)
-local MethodColor = Color3.fromRGB(220, 220, 170)
-local PropertyColor = Color3.fromRGB(156, 220, 254)
-local NumberColor = Color3.fromRGB(181, 206, 168)
-local StringColor = Color3.fromRGB(206, 145, 120)
-local CommentColor = Color3.fromRGB(106, 153, 85)
-local BoolColor = Color3.fromRGB(174, 129, 255)
-local NilColor = Color3.fromRGB(174, 129, 255)
-local SelfColor = Color3.fromRGB(86, 156, 214)
+
+local KeywordColor = Color3.fromRGB(235, 121, 115)
+local LuauKeywordColor = Color3.fromRGB(235, 121, 115)
+local FunctionNameColor = Color3.fromRGB(250, 228, 170)
+local FunctionColor = Color3.fromRGB(235, 121, 115)
+local MethodColor = Color3.fromRGB(250, 228, 170)
+local PropertyColor = Color3.fromRGB(112, 160, 255)
+local NumberColor = Color3.fromRGB(242, 186, 42)
+local StringColor = Color3.fromRGB(142, 233, 182)
+local CommentColor = Color3.fromRGB(106, 111, 129)
+local BoolColor = Color3.fromRGB(242, 186, 42)
+local NilColor = Color3.fromRGB(242, 186, 42)
+local SelfColor = Color3.fromRGB(235, 121, 115)
 local GlobalColor = Color3.fromRGB(78, 201, 176)
 local TypeColor = Color3.fromRGB(78, 201, 176)
 local BuiltInFunctionColor = Color3.fromRGB(220, 220, 170)
-local BracketColor = Color3.fromRGB(212, 212, 212)
-local OperatorColor = Color3.fromRGB(212, 212, 212)
+local BracketColor = Color3.fromRGB(188, 190, 200)
+local OperatorColor = Color3.fromRGB(188, 190, 200)
 
 -----/Main/-----
 local ScreenGui = Instance.new("ScreenGui")
@@ -216,7 +217,8 @@ CodeBox.TextYAlignment = Enum.TextYAlignment.Top
 CodeBox.PlaceholderColor3 = SecondaryColor
 CodeBox.BorderSizePixel = 0
 CodeBox.TextSize = 14
-CodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+CodeBox.TextColor3 = TextColor
+CodeBox.TextTransparency = 1
 CodeBox.Font = Enum.Font.Code
 CodeBox.AutomaticSize = Enum.AutomaticSize.Y
 CodeBox.MultiLine = true
@@ -391,10 +393,22 @@ local KeywordList = {
 	["not"] = true
 }
 
+local LuauKeywordList = {
+	["type"] = true,
+	["export"] = true
+}
+
 local BooleanList = {
 	["true"] = true,
-	["false"] = true,
+	["false"] = true
+}
+
+local NilList = {
 	["nil"] = true
+}
+
+local SelfList = {
+	["self"] = true
 }
 
 local GlobalList = {
@@ -407,6 +421,8 @@ local GlobalList = {
 	["UDim"] = true,
 	["Vector2"] = true,
 	["Vector3"] = true,
+	["Vector2int16"] = true,
+	["Vector3int16"] = true,
 	["CFrame"] = true,
 	["Enum"] = true,
 	["task"] = true,
@@ -416,7 +432,35 @@ local GlobalList = {
 	["table"] = true,
 	["coroutine"] = true,
 	["os"] = true,
-	["debug"] = true
+	["debug"] = true,
+	["utf8"] = true,
+	["buffer"] = true,
+	["bit32"] = true,
+	["DateTime"] = true,
+	["RaycastParams"] = true,
+	["OverlapParams"] = true,
+	["TweenInfo"] = true,
+	["BrickColor"] = true,
+	["NumberRange"] = true,
+	["NumberSequence"] = true,
+	["ColorSequence"] = true,
+	["Region3"] = true,
+	["Rect"] = true,
+	["Axes"] = true,
+	["Faces"] = true
+}
+
+local TypeList = {
+	["string"] = true,
+	["number"] = true,
+	["boolean"] = true,
+	["table"] = true,
+	["thread"] = true,
+	["function"] = true,
+	["userdata"] = true,
+	["any"] = true,
+	["unknown"] = true,
+	["never"] = true
 }
 
 local FunctionList = {
@@ -434,7 +478,15 @@ local FunctionList = {
 	["pcall"] = true,
 	["xpcall"] = true,
 	["assert"] = true,
-	["error"] = true
+	["error"] = true,
+	["rawget"] = true,
+	["rawset"] = true,
+	["rawequal"] = true,
+	["rawlen"] = true,
+	["setmetatable"] = true,
+	["getmetatable"] = true,
+	["unpack"] = true,
+	["collectgarbage"] = true
 }
 
 local function GetLineCount(Text : string)
@@ -457,12 +509,21 @@ local function HighlightSyntax(Source : string)
 	local Length = #Source
 
 	local KeywordHex = ToHex(KeywordColor)
+	local LuauKeywordHex = ToHex(LuauKeywordColor)
 	local StringHex = ToHex(StringColor)
 	local NumberHex = ToHex(NumberColor)
 	local CommentHex = ToHex(CommentColor)
 	local GlobalHex = ToHex(GlobalColor)
 	local FunctionHex = ToHex(FunctionColor)
-	local BooleanHex = ToHex(BooleanColor)
+	local FunctionNameHex = ToHex(FunctionNameColor)
+	local MethodHex = ToHex(MethodColor)
+	local PropertyHex = ToHex(PropertyColor)
+	local BooleanHex = ToHex(BoolColor)
+	local NilHex = ToHex(NilColor)
+	local SelfHex = ToHex(SelfColor)
+	local BuiltInFunctionHex = ToHex(BuiltInFunctionColor)
+	local TypeHex = ToHex(TypeColor)
+	local BracketHex = ToHex(BracketColor)
 	local OperatorHex = ToHex(OperatorColor)
 
 	local function Add(Text : string, Color : string?)
@@ -475,17 +536,82 @@ local function HighlightSyntax(Source : string)
 		end
 	end
 
+	local function IsIdentifierStart(Character : string)
+		return Character ~= "" and Character:match("[%a_]") ~= nil
+	end
+
+	local function IsIdentifierCharacter(Character : string)
+		return Character ~= "" and Character:match("[%w_]") ~= nil
+	end
+
+	local function GetPreviousNonSpace(Index : number)
+		local Current = Index
+
+		while Current > 1 do
+			local Character = Source:sub(Current - 1, Current - 1)
+
+			if not Character:match("%s") then
+				return Character, Current - 1
+			end
+
+			Current -= 1
+		end
+
+		return "", 0
+	end
+
+	local function GetNextNonSpace(Index : number)
+		local Current = Index
+
+		while Current <= Length do
+			local Character = Source:sub(Current, Current)
+
+			if not Character:match("%s") then
+				return Character, Current
+			end
+
+			Current += 1
+		end
+
+		return "", Length + 1
+	end
+
 	while Position <= Length do
 		local Character = Source:sub(Position, Position)
 		local NextCharacter = Source:sub(Position + 1, Position + 1)
+		local ThirdCharacter = Source:sub(Position + 2, Position + 2)
 
 		if Character == "-" and NextCharacter == "-" then
-			local NewLine = Source:find("\n", Position, true)
-			local EndPosition = NewLine and NewLine - 1 or Length
-			local Comment = Source:sub(Position, EndPosition)
+			if ThirdCharacter == "[" and Source:sub(Position + 3, Position + 3) == "[" then
+				local EndPosition = Source:find("]]", Position + 4, true)
 
-			Add(Comment, CommentHex)
-			Position = EndPosition + 1
+				if EndPosition then
+					local CommentEnd = EndPosition + 1
+					Add(Source:sub(Position, CommentEnd), CommentHex)
+					Position = CommentEnd + 1
+				else
+					Add(Source:sub(Position), CommentHex)
+					break
+				end
+			else
+				local NewLine = Source:find("\n", Position, true)
+				local EndPosition = NewLine and NewLine - 1 or Length
+
+				Add(Source:sub(Position, EndPosition), CommentHex)
+				Position = EndPosition + 1
+			end
+
+		elseif Character == "[" and NextCharacter == "[" then
+			local EndPosition = Source:find("]]", Position + 2, true)
+
+			if EndPosition then
+				local StringEnd = EndPosition + 1
+				Add(Source:sub(Position, StringEnd), StringHex)
+				Position = StringEnd + 1
+			else
+				Add(Source:sub(Position), StringHex)
+				break
+			end
 
 		elseif Character == '"' or Character == "'" then
 			local Quote = Character
@@ -507,59 +633,175 @@ local function HighlightSyntax(Source : string)
 			Add(Source:sub(Position, Current - 1), StringHex)
 			Position = Current
 
-		elseif Character:match("%d") then
+		elseif Character:match("%d") or (Character == "." and NextCharacter:match("%d")) then
 			local Current = Position
+			local HasExponent = false
 
 			while Current <= Length do
 				local NumberCharacter = Source:sub(Current, Current)
 
-				if not NumberCharacter:match("[%d%.]") then
+				if NumberCharacter:match("[%d%.]") then
+					Current += 1
+				elseif (NumberCharacter == "e" or NumberCharacter == "E") and not HasExponent then
+					HasExponent = true
+					Current += 1
+
+					local Sign = Source:sub(Current, Current)
+
+					if Sign == "+" or Sign == "-" then
+						Current += 1
+					end
+				elseif (NumberCharacter == "x" or NumberCharacter == "X") and Current == Position + 1 then
+					Current += 1
+				elseif NumberCharacter:match("[%a]") and Source:sub(Position, Position + 1):lower() == "0x" then
+					Current += 1
+				else
 					break
 				end
-
-				Current += 1
 			end
 
 			Add(Source:sub(Position, Current - 1), NumberHex)
 			Position = Current
 
-		elseif Character:match("[%a_]") then
-			local Current = Position
+		elseif IsIdentifierStart(Character) then
+			local Current = Position + 1
 
-			while Current <= Length do
-				local IdentifierCharacter = Source:sub(Current, Current)
-
-				if not IdentifierCharacter:match("[%w_]") then
-					break
-				end
-
+			while Current <= Length and IsIdentifierCharacter(Source:sub(Current, Current)) do
 				Current += 1
 			end
 
 			local Identifier = Source:sub(Position, Current - 1)
 			local Color = nil
 
+			local PreviousCharacter, PreviousPosition = GetPreviousNonSpace(Position)
+			local NextNonSpace, NextPosition = GetNextNonSpace(Current)
+
 			if KeywordList[Identifier] then
 				Color = KeywordHex
+
+			elseif LuauKeywordList[Identifier] then
+				Color = LuauKeywordHex
+
 			elseif BooleanList[Identifier] then
 				Color = BooleanHex
+
+			elseif NilList[Identifier] then
+				Color = NilHex
+
+			elseif SelfList[Identifier] then
+				Color = SelfHex
+
+			elseif TypeList[Identifier] and PreviousCharacter == ":" then
+				Color = TypeHex
+
 			elseif GlobalList[Identifier] then
 				Color = GlobalHex
+
 			elseif FunctionList[Identifier] then
-				Color = FunctionHex
-			elseif Source:sub(Current, Current) == "(" then
+				Color = BuiltInFunctionHex
+
+			elseif PreviousCharacter == ":" then
+				Color = MethodHex
+
+			elseif PreviousCharacter == "." then
+				Color = PropertyHex
+
+			elseif PreviousCharacter == ":" and NextNonSpace == "(" then
+				Color = MethodHex
+
+			elseif NextNonSpace == "(" then
 				Color = FunctionHex
 			end
 
-			Add(Identifier, Color)
-			Position = Current
+			if Identifier == "function" then
+				Add(Identifier, KeywordHex)
+				Position = Current
+
+				local FunctionStart = Current
+				local FunctionCharacter, FunctionPosition = GetNextNonSpace(FunctionStart)
+
+				if IsIdentifierStart(FunctionCharacter) then
+					local NameEnd = FunctionPosition + 1
+
+					while NameEnd <= Length and IsIdentifierCharacter(Source:sub(NameEnd, NameEnd)) do
+						NameEnd += 1
+					end
+
+					local FunctionName = Source:sub(FunctionPosition, NameEnd - 1)
+
+					if FunctionName ~= "" then
+						Add(Source:sub(FunctionStart, FunctionPosition - 1))
+						Add(FunctionName, FunctionNameHex)
+						Position = NameEnd
+					end
+				end
+			else
+				Add(Identifier, Color)
+				Position = Current
+			end
 
 		elseif Character == ":" and NextCharacter == ":" then
 			Add("::", OperatorHex)
 			Position += 2
 
+		elseif Character == "." and NextCharacter == "." and ThirdCharacter == "." then
+			Add("...", OperatorHex)
+			Position += 3
+
+		elseif Character == "." and NextCharacter == "." then
+			Add("..", OperatorHex)
+			Position += 2
+
+		elseif Character == "=" and NextCharacter == "=" then
+			Add("==", OperatorHex)
+			Position += 2
+
+		elseif Character == "~" and NextCharacter == "=" then
+			Add("~=", OperatorHex)
+			Position += 2
+
+		elseif Character == "<" and NextCharacter == "=" then
+			Add("<=", OperatorHex)
+			Position += 2
+
+		elseif Character == ">" and NextCharacter == "=" then
+			Add(">=", OperatorHex)
+			Position += 2
+
+		elseif Character == "=" and NextCharacter == ">" then
+			Add("=>", OperatorHex)
+			Position += 2
+
+		elseif Character == "+" and NextCharacter == "=" then
+			Add("+=", OperatorHex)
+			Position += 2
+
+		elseif Character == "-" and NextCharacter == "=" then
+			Add("-=", OperatorHex)
+			Position += 2
+
+		elseif Character == "*" and NextCharacter == "=" then
+			Add("*=", OperatorHex)
+			Position += 2
+
+		elseif Character == "/" and NextCharacter == "=" then
+			Add("/=", OperatorHex)
+			Position += 2
+
+		elseif Character == "%" and NextCharacter == "=" then
+			Add("%=", OperatorHex)
+			Position += 2
+
+		elseif Character == "^" and NextCharacter == "=" then
+			Add("^=", OperatorHex)
+			Position += 2
+
 		elseif Character:match("[=<>~%+%-%*/%^%%]") then
 			Add(Character, OperatorHex)
+			Position += 1
+
+		elseif Character:match("[%(%)%[%]{}]") then
+			Add(Character, BracketHex)
 			Position += 1
 
 		else
@@ -622,13 +864,6 @@ end
 
 local function UpdateScroll()
 	Lines.CanvasPosition = Vector2.new(0, CodeScroll.CanvasPosition.Y)
-
-	HighlightBox.Position = UDim2.new(
-		0,
-		5 - CodeScroll.CanvasPosition.X,
-		0,
-		4 - CodeScroll.CanvasPosition.Y
-	)
 end
 
 local function UpdateCanvas()
