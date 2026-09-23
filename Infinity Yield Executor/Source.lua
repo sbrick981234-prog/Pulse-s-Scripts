@@ -864,9 +864,25 @@ local function UpdateLines()
 
 	LinesText.Text = table.concat(LineData, "\n")
 
-	local Height = math.max(CodeBox.AbsoluteSize.Y + 8, CodeScroll.AbsoluteSize.Y)
+	local Height = math.max(
+		CodeBox.AbsoluteSize.Y + 8,
+		CodeScroll.AbsoluteSize.Y
+	)
 
-	Lines.CanvasSize = UDim2.new(0, 0, 0, Height)
+	-- Важно: увеличиваем сам TextLabel с номерами строк
+	LinesText.Size = UDim2.new(
+		1,
+		0,
+		0,
+		Height
+	)
+
+	Lines.CanvasSize = UDim2.new(
+		0,
+		0,
+		0,
+		Height
+	)
 
 	CodeScroll.CanvasSize = UDim2.new(
 		0,
