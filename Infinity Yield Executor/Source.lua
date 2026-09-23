@@ -169,7 +169,7 @@ LinesText.TextYAlignment = Enum.TextYAlignment.Top
 LinesText.Font = Enum.Font.Code
 LinesText.TextColor3 = LineColor
 LinesText.BackgroundTransparency = 1
-LinesText.Size = UDim2.new(1, 0, 0, 191)
+LinesText.Size = UDim2.new(0, 20, 1, 0)
 LinesText.Text = "1"
 LinesText.Position = UDim2.new(0, 0, 0, 4)
 LinesText.ZIndex = 3
@@ -868,8 +868,19 @@ local function UpdateLines()
 		CodeBox.AbsoluteSize.Y + 8,
 		CodeScroll.AbsoluteSize.Y
 	)
+	
+	local LastLineText = tostring(LineCount)
+	local NumberWidth = TextService:GetTextSize(
+		LastLineText,
+		LinesText.TextSize,
+		LinesText.Font,
+		Vector2.new(1000, 1000)
+	).X + 10
 
-	-- Важно: увеличиваем сам TextLabel с номерами строк
+	NumberWidth = math.max(NumberWidth, 20)
+	
+	Lines.Size = UDim2.new(0, NumberWidth, 1, 0)
+
 	LinesText.Size = UDim2.new(
 		1,
 		0,
@@ -882,6 +893,20 @@ local function UpdateLines()
 		0,
 		0,
 		Height
+	)
+	
+	CodeScroll.Position = UDim2.new(
+		0,
+		NumberWidth,
+		0,
+		0
+	)
+
+	CodeScroll.Size = UDim2.new(
+		1,
+		-NumberWidth,
+		1,
+		0
 	)
 
 	CodeScroll.CanvasSize = UDim2.new(
