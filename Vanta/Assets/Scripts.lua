@@ -1,4 +1,4 @@
-local ScriptList = {
+{
 	{
 		Name = "Fling Deluxe",
 		Source = [[
