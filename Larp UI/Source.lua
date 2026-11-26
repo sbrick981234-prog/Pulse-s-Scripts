@@ -69,7 +69,7 @@ function UILib:CreateWindow(UITitle)
 	ScreenGui.Name = UITitle
 	ScreenGui.ResetOnSpawn = false
 	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	ScreenGui.Parent = gethui() or PlayerGui
+	ScreenGui.Parent = PlayerGui
 
 	local Main = Instance.new("CanvasGroup")
 	Main.Name = "Main"
